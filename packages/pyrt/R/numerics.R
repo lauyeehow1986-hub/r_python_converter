@@ -3,10 +3,18 @@
 # operator / comparison dispatch with dunder hooks.
 
 is_int_like <- function(x) {
+  if (inherits(x, "pyrt_ndarray")) {
+    v <- as.vector(x$.arr)
+    if (length(v) == 1L) x <- v[[1L]] else return(FALSE)
+  }
   (is.integer(x) && length(x) == 1L && !is.na(x)) || gmp::is.bigz(x)
 }
 
 is_num_scalar <- function(x) {
+  if (inherits(x, "pyrt_ndarray")) {
+    v <- as.vector(x$.arr)
+    if (length(v) == 1L) x <- v[[1L]] else return(FALSE)
+  }
   is_int_like(x) || (is.double(x) && length(x) == 1L) || (is.logical(x) && length(x) == 1L)
 }
 
@@ -21,10 +29,16 @@ normalize_py_int <- function(z) {
 }
 
 as_bigz_exact <- function(x) {
+  if (inherits(x, "pyrt_ndarray")) {
+    v <- as.vector(x$.arr)
+    if (length(v) == 1L) x <- v[[1L]]
+  }
+  if (is.list(x) && length(x) == 1L) x <- x[[1L]]
   if (gmp::is.bigz(x)) return(x)
   if (is.logical(x)) return(gmp::as.bigz(as.integer(x)))
   if (is.integer(x)) return(gmp::as.bigz(x))
   if (is.double(x)) return(gmp::as.bigz(sprintf("%.0f", trunc(x))))
+  if (is.character(x)) return(gmp::as.bigz(x))
   gmp::as.bigz(x)
 }
 
@@ -56,6 +70,11 @@ py_int <- function(x = 0L, base = NULL) {
     }
     return(parse_str_int(x, as.integer(base)))
   }
+  if (inherits(x, "pyrt_ndarray")) {
+    v <- as.vector(x$.arr)
+    if (length(v) == 1L) return(py_int(v[[1L]]))
+  }
+  if (is.list(x) && length(x) == 1L) return(py_int(x[[1L]]))
   if (inherits(x, "pyrt_instance")) {
     m <- py_getattr_default(x, "__int__", NULL)
     if (!is.null(m)) return(m())
@@ -392,6 +411,16 @@ py_bitxor <- function(x, y) {
 #' @rdname py_int
 #' @export
 py_invert <- function(x) {
+  if (inherits(x, "pyrt_ndarray")) {
+    if (identical(x$.dtype, "bool") || is.logical(x$.arr)) {
+      res <- !x$.arr
+      if (!is.null(dim(x$.arr))) dim(res) <- dim(x$.arr)
+      return(py_ndarray_raw(res, x$.shape, "bool"))
+    }
+    res <- -as.integer(x$.arr) - 1L
+    if (!is.null(dim(x$.arr))) dim(res) <- dim(x$.arr)
+    return(py_ndarray_raw(res, x$.shape, x$.dtype))
+  }
   if (inherits(x, "pyrt_instance")) {
     fn <- py_getattr_default(x, "__invert__", NULL)
     if (!is.null(fn)) return(fn())

@@ -2,7 +2,7 @@
 % Please edit documentation in R/native.R
 \name{transpile_pyo3_rust}
 \alias{transpile_pyo3_rust}
-\title{Rewrite a \code{PyO3} Rust source file (\verb{#[pyfunction]}, \verb{#[pymodule]}) to \code{extendr}}
+\title{Rewrite a \code{PyO3} Rust source file (\verb{#[pyfunction]}, \verb{#[pyclass]}, \verb{#[pymodule]}) to \code{extendr}}
 \usage{
 transpile_pyo3_rust(rust_code, pkg_name = "rustpkg")
 }
@@ -17,14 +17,15 @@ A list with:
 \item \code{rust_code}: transformed Rust code using \verb{extendr_api::prelude::*}.
 \item \code{r_wrappers}: R wrapper functions calling \code{.Call("wrap__<fn>", ...)}.
 \item \code{functions}: character vector of exported \verb{#[pyfunction]} names.
+\item \code{classes}: character vector of exported \verb{#[pyclass]} struct names.
 \item \code{makevars}: \code{src/Makevars} content for Unix/macOS.
 \item \code{makevars_win}: \code{src/Makevars.win} content for Windows (\code{x86_64-pc-windows-gnu}).
 }
 }
 \description{
 Converts \verb{use pyo3::prelude::*;}, \verb{#[pyfunction]}, \verb{#[pymethods]},
-\verb{#[pyclass]}, \verb{PyResult<T>}, and \verb{#[pymodule]} in a Rust source file into
-\verb{use extendr_api::prelude::*;}, \verb{#[extendr]}, \verb{Result<T>}, and
+\verb{#[pyclass]}, \verb{#[new]}, \verb{PyResult<T>}, and \verb{#[pymodule]} in a Rust source
+file into \verb{use extendr_api::prelude::*;}, \verb{#[extendr]}, \verb{Result<T>}, and
 \verb{extendr_module! \{ mod <pkg>; ... \}}, and generates matching R \code{.Call}
 wrappers so the crate compiles as a standalone R package without Python or
 \code{libpython}.

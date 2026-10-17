@@ -143,6 +143,11 @@ print.pyrt_tuple <- function(x, ...) {
   invisible(x)
 }
 
+#' @export
+as.list.pyrt_tuple <- function(x, ...) {
+  x$items
+}
+
 # ---- py_list (mutable reference semantics) ----------------------------------
 
 #' @rdname py_len
@@ -256,6 +261,11 @@ format.pyrt_list <- function(x, ...) {
 print.pyrt_list <- function(x, ...) {
   cat(format(x, ...), "\n", sep = "")
   invisible(x)
+}
+
+#' @export
+as.list.pyrt_list <- function(x, ...) {
+  x$as_r_list()
 }
 
 # ---- py_dict (insertion-ordered, arbitrary hashable keys) -------------------

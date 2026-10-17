@@ -8,8 +8,16 @@
 \description{
 Parses 'Python' source code without requiring a 'Python' installation and converts 'Python' packages into standalone 'R' packages that run natively in 'R'. Parsing uses a vendored 'tree-sitter' grammar for 'Python' together with the 'treesitter' package, and produces an abstract syntax tree that mirrors the 'Python' 'ast' module.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/lauyeehow1986-hub/r_python_converter}
+  \item Report bugs at \url{https://github.com/lauyeehow1986-hub/r_python_converter/issues}
+}
+
+}
 \author{
-\strong{Maintainer}: pyport authors \email{maintainer@example.com} (PLACEHOLDER: replace with the real maintainer before release)
+\strong{Maintainer}: Yee How Lau \email{lauyeehow1986@gmail.com} [copyright holder]
 
 Other contributors:
 \itemize{

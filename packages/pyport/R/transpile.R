@@ -1477,6 +1477,7 @@ transpile_python <- function(source, module_name = NULL) {
 
   emit_import_from <- function(node, ctx) {
     mod_name <- if (is.null(node$module)) "" else node$module
+    if (identical(mod_name, "__future__")) return("invisible(NULL)")
     mod_expr <- resolve_module_expr(mod_name)
     lines <- character()
     for (al in node$names) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/native.R
 \name{transpile_c_extension}
 \alias{transpile_c_extension}
-\title{Transpile a simple C or Cython function file to an R \code{.Call} C file}
+\title{Transpile a C or Cython extension file to an R \code{.Call} C file}
 \usage{
 transpile_c_extension(code, pkg_name = "convertedpkg")
 }
@@ -17,8 +17,9 @@ A list with \code{c_code}, \code{r_code}, and \code{functions}.
 }
 \description{
 Parses C or Cython scalar/numeric functions (\code{double}/\code{int}/\verb{const char*}
-parameters and return values, or \verb{<Python.h>} \verb{PyObject*} functions) and
-generates:
+parameters and return values) as well as \verb{<Python.h>} \code{PyMethodDef} +
+\code{PyArg_ParseTuple} functions (\code{PyObject* fn(PyObject *self, PyObject *args)})
+and Cython \code{cdef}/\code{cpdef} functions, and generates:
 \itemize{
 \item \code{c_code}: C source file with \verb{#include "pyport_cpython_shim.h"}, \code{.Call}
 \code{SEXP} entry points (\verb{r_wrap_<name>}), and \verb{R_init_<pkg>} registration.

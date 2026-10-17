@@ -8,8 +8,16 @@
 \description{
 Provides the 'Python' runtime semantics required by 'R' packages generated with 'pyport', including reference-semantics containers, class and method-resolution-order dispatch, exception hierarchies, iteration and slicing helpers, arbitrary-precision integer arithmetic, and bit-exact random number generation.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/lauyeehow1986-hub/r_python_converter}
+  \item Report bugs at \url{https://github.com/lauyeehow1986-hub/r_python_converter/issues}
+}
+
+}
 \author{
-\strong{Maintainer}: pyport authors \email{maintainer@example.com} (PLACEHOLDER: replace with the real maintainer before release)
+\strong{Maintainer}: Yee How Lau \email{lauyeehow1986@gmail.com} [copyright holder]
 
 }
 \keyword{internal}

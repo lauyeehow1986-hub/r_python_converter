@@ -345,7 +345,7 @@ ndarray_reduce <- function(x, fn, axis = NULL, keepdims = FALSE) {
     any = function(axis = NULL) ndarray_reduce(x, function(v) any(as.logical(v)), axis, FALSE),
     dot = function(other) np_dot(x, other),
     `__matmul__` = function(other) np_dot(x, other),
-    `__len__` = function() sh[[1L]],
+    `__len__` = function() if (length(sh) == 0L) length(arr) else sh[[1L]],
     `__getitem__` = function(key) ndarray_getitem(x, key),
     `__setitem__` = function(key, value) ndarray_setitem(x, key, value),
     `__add__` = function(other) ndarray_binary_op(x, other, `+`),
@@ -404,6 +404,10 @@ ndarray_getitem <- function(x, key) {
     return(py_ndarray_raw(as.vector(sel), length(sel), dt))
   }
 
+  if (length(sh) == 0L) {
+    return(as.vector(arr)[[1L]])
+  }
+
   if (inherits(key, "pyrt_tuple") && length(sh) >= 2L) {
     k_items <- key$items
     idx1 <- resolve_axis_index(k_items[[1L]], sh[[1L]])
@@ -447,6 +451,10 @@ ndarray_getitem <- function(x, key) {
 ndarray_setitem <- function(x, key, value) {
   sh <- x$.shape
   val <- if (inherits(value, "pyrt_ndarray")) value$.arr else value
+  if (length(sh) == 0L) {
+    x$.arr <- val
+    return(invisible(x))
+  }
   if (inherits(key, "pyrt_ndarray") && identical(key$.dtype, "bool")) {
     x$.arr[as.logical(key$.arr)] <- val
     return(invisible(x))
@@ -517,7 +525,7 @@ make_filled_ndarray <- function(shape, fill_val, dtype = "float64") {
   n <- as.integer(prod(sh))
   vec <- rep(fill_val, n)
   arr <- if (length(sh) <= 1L) vec else array(vec, dim = sh)
-  py_ndarray(arr, dtype = dtype)
+  py_ndarray_raw(arr, sh, dtype = dtype)
 }
 
 # ---- 2. `numpy` module builder ----------------------------------------------
@@ -645,19 +653,19 @@ build_numpy_module <- function() {
       }
       st <- as.numeric(step)
       if ((st > 0 && s0 >= s1) || (st < 0 && s0 <= s1)) {
-        return(py_ndarray(numeric(0), dtype = dtype))
+        return(py_ndarray_raw(numeric(0), 0L, dtype = dtype))
       }
       n <- ceiling((s1 - s0) / st)
       vals <- s0 + seq(0, n - 1) * st
       if (is.null(dtype) && all(vals == floor(vals))) {
         vals <- as.integer(vals)
       }
-      py_ndarray(vals, dtype = dtype)
+      py_ndarray_raw(vals, length(vals), dtype = if (is.null(dtype)) infer_dtype(vals) else dtype)
     },
     linspace = function(start, stop, num = 50L, endpoint = TRUE) {
       n <- as.integer(num)
-      if (n <= 0L) return(py_ndarray(numeric(0)))
-      if (n == 1L) return(py_ndarray(as.double(start)))
+      if (n <= 0L) return(py_ndarray_raw(numeric(0), 0L, dtype = "float64"))
+      if (n == 1L) return(py_ndarray_raw(as.double(start), 1L, dtype = "float64"))
       vals <- if (isTRUE(endpoint)) {
         seq(as.double(start), as.double(stop), length.out = n)
       } else {
@@ -665,7 +673,7 @@ build_numpy_module <- function() {
         s1 <- as.double(stop)
         s0 + (s1 - s0) * (0:(n - 1L)) / n
       }
-      py_ndarray(vals, dtype = "float64")
+      py_ndarray_raw(vals, length(vals), dtype = "float64")
     },
     reshape = function(a, newshape) py_getattr(py_ndarray(a), "reshape")(newshape),
     transpose = function(a) py_getattr(py_ndarray(a), "T"),
@@ -1272,6 +1280,22 @@ build_scipy_module <- function() {
       attr(res, "nt_fields") <- c("slope", "intercept", "rvalue", "pvalue", "stderr")
       class(res) <- c("pyrt_namedtuple", class(res))
       res
+    },
+    rankdata = function(a, method = "average") {
+      v <- as.numeric(py_ndarray(a)$.arr)
+      tm <- switch(method, average = "average", min = "min", max = "max", dense = "dense", ordinal = "first", "average")
+      if (tm == "dense") {
+        res <- as.numeric(as.factor(v))
+      } else {
+        res <- rank(v, ties.method = tm)
+      }
+      py_ndarray(res, dtype = "float64")
+    },
+    zscore = function(a) {
+      v <- as.numeric(py_ndarray(a)$.arr)
+      s <- stats::sd(v)
+      res <- if (is.na(s) || s == 0) rep(0, length(v)) else (v - mean(v)) / s
+      py_ndarray(res, dtype = "float64")
     }
   )
 
