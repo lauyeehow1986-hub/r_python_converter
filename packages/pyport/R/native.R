@@ -86,11 +86,25 @@ cpython_shim_header <- function() {
     "#include <Rinternals.h>",
     "#include <R_ext/Rdynload.h>",
     "#include <stdint.h>",
+    "#include <stdarg.h>",
     "#include <string.h>",
     "",
     "/* Map PyObject* directly to R SEXP */",
     "typedef struct SEXPREC PyObject;",
     "typedef R_xlen_t Py_ssize_t;",
+    "typedef PyObject* (*PyCFunction)(PyObject*, PyObject*);",
+    "",
+    "typedef struct {",
+    "  const char *ml_name;",
+    "  PyCFunction ml_meth;",
+    "  int ml_flags;",
+    "  const char *ml_doc;",
+    "} PyMethodDef;",
+    "",
+    "#define METH_VARARGS  0x0001",
+    "#define METH_KEYWORDS 0x0002",
+    "#define METH_NOARGS   0x0004",
+    "#define METH_O        0x0008",
     "",
     "#define Py_None R_NilValue",
     "#define Py_RETURN_NONE return R_NilValue",
@@ -135,16 +149,97 @@ cpython_shim_header <- function() {
     "  Rf_error(\"%s: %s\", exc, msg);",
     "}",
     "",
+    "/* Variadic PyArg_ParseTuple unpacking an R VECSXP argument list */",
+    "static inline int PyArg_ParseTuple(PyObject *args, const char *fmt, ...) {",
+    "  va_list ap;",
+    "  va_start(ap, fmt);",
+    "  R_xlen_t idx = 0;",
+    "  R_xlen_t nargs = (args == R_NilValue) ? 0 : Rf_xlength(args);",
+    "  int optional = 0;",
+    "  for (const char *p = fmt; *p != '\\0'; ++p) {",
+    "    if (*p == '|') { optional = 1; continue; }",
+    "    if (*p == ':' || *p == ';') break;",
+    "    if (*p == ' ' || *p == '(' || *p == ')') continue;",
+    "    if (idx >= nargs) {",
+    "      va_end(ap);",
+    "      if (optional) return 1;",
+    "      Rf_error(\"TypeError: function takes more arguments (%d given)\", (int)nargs);",
+    "      return 0;",
+    "    }",
+    "    SEXP el = (TYPEOF(args) == VECSXP) ? VECTOR_ELT(args, idx) : args;",
+    "    if (*p == 'i') {",
+    "      int *out = va_arg(ap, int*);",
+    "      *out = Rf_asInteger(el);",
+    "    } else if (*p == 'l') {",
+    "      long *out = va_arg(ap, long*);",
+    "      *out = (long)Rf_asInteger(el);",
+    "    } else if (*p == 'd') {",
+    "      double *out = va_arg(ap, double*);",
+    "      *out = Rf_asReal(el);",
+    "    } else if (*p == 's') {",
+    "      const char **out = va_arg(ap, const char**);",
+    "      *out = CHAR(STRING_ELT(el, 0));",
+    "    } else if (*p == 'p') {",
+    "      int *out = va_arg(ap, int*);",
+    "      *out = Rf_asLogical(el);",
+    "    } else if (*p == 'O') {",
+    "      PyObject **out = va_arg(ap, PyObject**);",
+    "      *out = el;",
+    "    }",
+    "    idx++;",
+    "  }",
+    "  va_end(ap);",
+    "  return 1;",
+    "}",
+    "",
     "#endif /* PYPORT_CPYTHON_SHIM_H */",
     sep = "\n"
   )
 }
 
-#' Transpile a simple C or Cython function file to an R `.Call` C file
+# Lower simple Cython `cdef`/`cpdef` scalar functions into C functions
+lower_cython_to_c <- function(code) {
+  lines <- unlist(strsplit(paste(code, collapse = "\n"), "\r?\n"))
+  if (!any(grepl("^\\s*(cdef|cpdef)\\s+(int|long|double)\\s+", lines))) {
+    return(paste(lines, collapse = "\n"))
+  }
+  out <- character()
+  in_fn <- FALSE
+  fn_indent <- 0L
+  for (ln in lines) {
+    m <- regmatches(ln, regexec("^(\\s*)(?:cdef|cpdef)\\s+(int|long|double)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(([^)]*)\\)\\s*:\\s*$", ln))[[1L]]
+    if (length(m) > 0L) {
+      if (in_fn) out <- c(out, "}")
+      in_fn <- TRUE
+      fn_indent <- nchar(m[[2L]])
+      out <- c(out, sprintf("%s %s(%s) {", m[[3L]], m[[4L]], m[[5L]]))
+      next
+    }
+    if (in_fn) {
+      trimmed <- trimws(ln)
+      if (!nzchar(trimmed) || startsWith(trimmed, "#")) next
+      cur_ind <- nchar(sub("^(\\s*).*$", "\\1", ln))
+      if (cur_ind <= fn_indent) {
+        out <- c(out, "}")
+        in_fn <- FALSE
+      } else {
+        # Convert `cdef <type> <var> = <expr>` or `<stmt>` to C statement with `;`
+        stmt <- sub("^\\s*cdef\\s+(int|long|double)\\s+", "  \\1 ", ln)
+        if (!grepl("[{};]$", trimws(stmt))) stmt <- paste0(stmt, ";")
+        out <- c(out, stmt)
+      }
+    }
+  }
+  if (in_fn) out <- c(out, "}")
+  paste(out, collapse = "\n")
+}
+
+#' Transpile a C or Cython extension file to an R `.Call` C file
 #'
 #' Parses C or Cython scalar/numeric functions (`double`/`int`/`const char*`
-#' parameters and return values, or `<Python.h>` `PyObject*` functions) and
-#' generates:
+#' parameters and return values) as well as `<Python.h>` `PyMethodDef` +
+#' `PyArg_ParseTuple` functions (`PyObject* fn(PyObject *self, PyObject *args)`)
+#' and Cython `cdef`/`cpdef` functions, and generates:
 #' - `c_code`: C source file with `#include "pyport_cpython_shim.h"`, `.Call`
 #'   `SEXP` entry points (`r_wrap_<name>`), and `R_init_<pkg>` registration.
 #' - `r_code`: R wrapper functions calling `.Call("r_wrap_<name>", ..., PACKAGE = pkg_name)`.
@@ -163,19 +258,18 @@ cpython_shim_header <- function() {
 #' ", pkg_name = "fastmath")
 #' cat(res$r_code)
 transpile_c_extension <- function(code, pkg_name = "convertedpkg") {
-  lines <- unlist(strsplit(paste(code, collapse = "\n"), "\r?\n"))
-  clean_code <- paste(lines, collapse = "\n")
+  clean_code <- lower_cython_to_c(code)
   # Replace `#include <Python.h>` with `#include "pyport_cpython_shim.h"`
   clean_code <- gsub('#include\\s*[<"]Python\\.h[>"]', '#include "pyport_cpython_shim.h"', clean_code)
-
-  # Match C function signatures: `(static)? (int|long|double|const char*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*\{`
-  pat <- "(?:^|\\n)\\s*(?:static\\s+)?(int|long|double|const\\s+char\\s*\\*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(([^)]*)\\)\\s*\\{"
-  m <- gregexpr(pat, clean_code, perl = TRUE)[[1L]]
 
   fn_names <- character()
   c_wrappers <- character()
   r_wrappers <- character()
   call_entries <- character()
+
+  # 1. Match scalar C functions: `(static)? (int|long|double|const char*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*\{`
+  pat <- "(?:^|\\n)\\s*(?:static\\s+)?(int|long|double|const\\s+char\\s*\\*)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(([^)]*)\\)\\s*\\{"
+  m <- gregexpr(pat, clean_code, perl = TRUE)[[1L]]
 
   if (length(m) >= 1L && m[[1L]] > 0L) {
     matches <- regmatches(clean_code, list(m))[[1L]]
@@ -254,6 +348,39 @@ transpile_c_extension <- function(code, pkg_name = "convertedpkg") {
     }
   }
 
+  # 2. Match CPython `PyMethodDef` table entries: `{"py_name", (PyCFunction)?c_fn, METH_..., "..."}`
+  meth_pat <- "\\{\\s*\"([A-Za-z_][A-Za-z0-9_]*)\"\\s*,\\s*(?:\\(\\s*PyCFunction\\s*\\)\\s*)?([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*(METH_[A-Z0-9_| ]+)"
+  mm <- gregexpr(meth_pat, clean_code, perl = TRUE)[[1L]]
+  if (length(mm) >= 1L && mm[[1L]] > 0L) {
+    mhits <- regmatches(clean_code, list(mm))[[1L]]
+    for (mh in mhits) {
+      cap <- regmatches(mh, regexec(meth_pat, mh, perl = TRUE))[[1L]]
+      py_name <- cap[[2L]]
+      c_fn <- cap[[3L]]
+      if (py_name %in% fn_names) next
+      fn_names <- c(fn_names, py_name)
+      wrap_sym <- paste0("r_pymeth_", py_name)
+      c_wrappers <- c(
+        c_wrappers,
+        sprintf(
+          "SEXP %s(SEXP s_args) {\n  PyObject *res = %s(R_NilValue, s_args);\n  return res ? res : R_NilValue;\n}",
+          wrap_sym, c_fn
+        )
+      )
+      call_entries <- c(
+        call_entries,
+        sprintf("  {\"%s\", (DL_FUNC) &%s, 1},", wrap_sym, wrap_sym)
+      )
+      r_wrappers <- c(
+        r_wrappers,
+        sprintf(
+          "%s <- function(...) {\n  .Call(\"%s\", list(...), PACKAGE = \"%s\")\n}",
+          py_name, wrap_sym, pkg_name
+        )
+      )
+    }
+  }
+
   pkg_c_ident <- gsub("[^A-Za-z0-9_]", "_", pkg_name)
   c_full <- paste(
     "#include \"pyport_cpython_shim.h\"",
@@ -283,11 +410,11 @@ transpile_c_extension <- function(code, pkg_name = "convertedpkg") {
 
 # ---- Phase 7: Rust (`PyO3` / `maturin`) -> `extendr` bridge ----------------
 
-#' Rewrite a `PyO3` Rust source file (`#[pyfunction]`, `#[pymodule]`) to `extendr`
+#' Rewrite a `PyO3` Rust source file (`#[pyfunction]`, `#[pyclass]`, `#[pymodule]`) to `extendr`
 #'
 #' Converts `use pyo3::prelude::*;`, `#[pyfunction]`, `#[pymethods]`,
-#' `#[pyclass]`, `PyResult<T>`, and `#[pymodule]` in a Rust source file into
-#' `use extendr_api::prelude::*;`, `#[extendr]`, `Result<T>`, and
+#' `#[pyclass]`, `#[new]`, `PyResult<T>`, and `#[pymodule]` in a Rust source
+#' file into `use extendr_api::prelude::*;`, `#[extendr]`, `Result<T>`, and
 #' `extendr_module! { mod <pkg>; ... }`, and generates matching R `.Call`
 #' wrappers so the crate compiles as a standalone R package without Python or
 #' `libpython`.
@@ -298,6 +425,7 @@ transpile_c_extension <- function(code, pkg_name = "convertedpkg") {
 #'   - `rust_code`: transformed Rust code using `extendr_api::prelude::*`.
 #'   - `r_wrappers`: R wrapper functions calling `.Call("wrap__<fn>", ...)`.
 #'   - `functions`: character vector of exported `#[pyfunction]` names.
+#'   - `classes`: character vector of exported `#[pyclass]` struct names.
 #'   - `makevars`: `src/Makevars` content for Unix/macOS.
 #'   - `makevars_win`: `src/Makevars.win` content for Windows (`x86_64-pc-windows-gnu`).
 #' @export
@@ -345,21 +473,44 @@ transpile_pyo3_rust <- function(rust_code, pkg_name = "rustpkg") {
     }
   }
 
+  # Extract all `#[pyclass]` struct names
+  cls_pat <- "#\\[pyclass(?:\\([^)]*\\))?\\]\\s*(?:pub\\s+)?struct\\s+([A-Za-z_][A-Za-z0-9_]*)"
+  cm <- gregexpr(cls_pat, src, perl = TRUE)[[1L]]
+  class_names <- character()
+  if (length(cm) >= 1L && cm[[1L]] > 0L) {
+    chits <- regmatches(src, list(cm))[[1L]]
+    for (ch in chits) {
+      cap <- regmatches(ch, regexec(cls_pat, ch, perl = TRUE))[[1L]]
+      cname <- cap[[2L]]
+      class_names <- c(class_names, cname)
+      r_wrappers <- c(
+        r_wrappers,
+        sprintf(
+          "%s <- new.env(parent = emptyenv())\n%s$new <- function(...) .Call(\"wrap__%s__new\", ..., PACKAGE = \"%s\")",
+          cname, cname, cname, pkg_name
+        )
+      )
+    }
+  }
+
   # Rewrite PyO3 imports and attributes to extendr
   out_rs <- src
   out_rs <- gsub("use\\s+pyo3::prelude::\\*;", "use extendr_api::prelude::*;", out_rs)
   out_rs <- gsub("#\\[pyfunction(?:\\([^)]*\\))?\\]", "#[extendr]", out_rs)
   out_rs <- gsub("#\\[pymethods\\]", "#[extendr]", out_rs)
   out_rs <- gsub("#\\[pyclass(?:\\([^)]*\\))?\\]", "#[extendr]", out_rs)
+  out_rs <- gsub("#\\[new\\]\\s*", "", out_rs)
   out_rs <- gsub("\\bPyResult<", "Result<", out_rs)
   # Strip `#[pymodule] fn ... { ... }` block if present and append `extendr_module!`
   out_rs <- sub("#\\[pymodule\\][\\s\\S]*$", "", out_rs, perl = TRUE)
 
   mod_ident <- gsub("[^A-Za-z0-9_]", "_", pkg_name)
-  fn_lines <- if (length(fn_names) > 0L) paste0("  fn ", fn_names, ";", collapse = "\n") else ""
+  fn_lines <- if (length(fn_names) > 0L) paste0("  fn ", fn_names, ";", collapse = "\n") else NULL
+  cls_lines <- if (length(class_names) > 0L) paste0("  impl ", class_names, ";", collapse = "\n") else NULL
+  mod_items <- paste(c(fn_lines, cls_lines), collapse = "\n")
   ext_macro <- sprintf(
     "\nextendr_module! {\n  mod %s;\n%s\n}\n",
-    mod_ident, fn_lines
+    mod_ident, mod_items
   )
   out_rs <- paste0(trimws(out_rs), "\n", ext_macro)
 
@@ -398,7 +549,9 @@ transpile_pyo3_rust <- function(rust_code, pkg_name = "rustpkg") {
     rust_code = out_rs,
     r_wrappers = paste(r_wrappers, collapse = "\n\n"),
     functions = fn_names,
+    classes = class_names,
     makevars = makevars,
     makevars_win = makevars_win
   )
 }
+

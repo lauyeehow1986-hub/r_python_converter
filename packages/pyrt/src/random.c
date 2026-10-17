@@ -590,3 +590,202 @@ SEXP ffi_mt_np_randint(SEXP ptr, SEXP low_sexp, SEXP high_sexp, SEXP n_sexp) {
   return out;
 }
 
+// ============================================================================
+// NumPy `default_rng` (`PCG64`: PCG-XSL-RR-128/64 + Melissa O'Neill SeedSequence)
+// ============================================================================
+
+#define PCG_MULT_HIGH 2549297995355413924ULL
+#define PCG_MULT_LOW  4865540595714422341ULL
+
+typedef struct {
+  uint64_t state_high;
+  uint64_t state_low;
+  uint64_t inc_high;
+  uint64_t inc_low;
+  int has_uint32;
+  uint32_t uinteger;
+} pyrt_pcg64_state;
+
+static void pcg64_finalizer(SEXP ptr) {
+  pyrt_pcg64_state* st = (pyrt_pcg64_state*) R_ExternalPtrAddr(ptr);
+  if (st != NULL) {
+    free(st);
+    R_ClearExternalPtr(ptr);
+  }
+}
+
+static pyrt_pcg64_state* get_pcg64(SEXP ptr) {
+  if (TYPEOF(ptr) != EXTPTRSXP) {
+    Rf_error("Expected PCG64 external pointer.");
+  }
+  pyrt_pcg64_state* st = (pyrt_pcg64_state*) R_ExternalPtrAddr(ptr);
+  if (st == NULL) {
+    Rf_error("PCG64 state pointer is NULL.");
+  }
+  return st;
+}
+
+static void u64_mul128(uint64_t x, uint64_t y, uint64_t* hi, uint64_t* lo) {
+  uint64_t x0 = x & 0xFFFFFFFFULL, x1 = x >> 32;
+  uint64_t y0 = y & 0xFFFFFFFFULL, y1 = y >> 32;
+  uint64_t p00 = x0 * y0;
+  uint64_t p01 = x0 * y1;
+  uint64_t p10 = x1 * y0;
+  uint64_t p11 = x1 * y1;
+  uint64_t mid = (p00 >> 32) + (p01 & 0xFFFFFFFFULL) + (p10 & 0xFFFFFFFFULL);
+  *lo = (p00 & 0xFFFFFFFFULL) | (mid << 32);
+  *hi = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
+}
+
+static void pcg64_step(pyrt_pcg64_state* st) {
+  uint64_t h1 = 0ULL, l1 = 0ULL;
+  u64_mul128(st->state_low, PCG_MULT_LOW, &h1, &l1);
+  h1 += st->state_high * PCG_MULT_LOW + st->state_low * PCG_MULT_HIGH;
+  uint64_t new_low = l1 + st->inc_low;
+  uint64_t carry = (new_low < l1) ? 1ULL : 0ULL;
+  uint64_t new_high = h1 + st->inc_high + carry;
+  st->state_low = new_low;
+  st->state_high = new_high;
+}
+
+static uint64_t pcg64_next64(pyrt_pcg64_state* st) {
+  pcg64_step(st);
+  uint64_t xorshifted = st->state_high ^ st->state_low;
+  unsigned int rot = (unsigned int) (st->state_high >> 58);
+  return (xorshifted >> rot) | (xorshifted << ((64U - rot) & 63U));
+}
+
+static uint32_t pcg64_next32(pyrt_pcg64_state* st) {
+  if (st->has_uint32) {
+    st->has_uint32 = 0;
+    return st->uinteger;
+  }
+  uint64_t next = pcg64_next64(st);
+  st->has_uint32 = 1;
+  st->uinteger = (uint32_t) (next >> 32);
+  return (uint32_t) (next & 0xFFFFFFFFULL);
+}
+
+static double pcg64_next_double(pyrt_pcg64_state* st) {
+  return (double) (pcg64_next64(st) >> 11) * (1.0 / 9007199254740992.0);
+}
+
+static uint32_t ss_hashmix(uint32_t value, uint32_t* hash_const) {
+  value ^= *hash_const;
+  *hash_const *= 0x931e8875U;
+  value *= *hash_const;
+  value ^= value >> 16;
+  return value;
+}
+
+static uint32_t ss_mix(uint32_t x, uint32_t y) {
+  uint32_t result = 0xca01f9ddU * x - 0x4973f715U * y;
+  result ^= result >> 16;
+  return result;
+}
+
+static void pcg64_seed_from_uint32(pyrt_pcg64_state* st, uint32_t seed) {
+  uint32_t pool[4];
+  uint32_t hash_const = 0x43b0d7e5U;
+  pool[0] = ss_hashmix(seed, &hash_const);
+  for (int i = 1; i < 4; ++i) {
+    pool[i] = ss_hashmix(0U, &hash_const);
+  }
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      if (i != j) {
+        pool[j] = ss_mix(pool[j], ss_hashmix(pool[i], &hash_const));
+      }
+    }
+  }
+  uint32_t out_words[8];
+  uint32_t gen_const = 0x8b51f9ddU;
+  for (int i = 0; i < 8; ++i) {
+    uint32_t val = pool[i % 4] ^ gen_const;
+    gen_const *= 0x58f38dedU;
+    val *= gen_const;
+    val ^= val >> 16;
+    out_words[i] = val;
+  }
+  uint64_t u64[4];
+  for (int i = 0; i < 4; ++i) {
+    u64[i] = ((uint64_t) out_words[2 * i + 1] << 32) | (uint64_t) out_words[2 * i];
+  }
+  uint64_t s_high = u64[0];
+  uint64_t s_low = u64[1];
+  uint64_t inc_high = (u64[2] << 1) | (u64[3] >> 63);
+  uint64_t inc_low = (u64[3] << 1) | 1ULL;
+
+  st->inc_high = inc_high;
+  st->inc_low = inc_low;
+  st->state_low = inc_low + s_low;
+  uint64_t carry = (st->state_low < inc_low) ? 1ULL : 0ULL;
+  st->state_high = inc_high + s_high + carry;
+  pcg64_step(st);
+  st->has_uint32 = 0;
+  st->uinteger = 0U;
+}
+
+SEXP ffi_pcg64_new(void) {
+  pyrt_pcg64_state* st = (pyrt_pcg64_state*) calloc(1, sizeof(pyrt_pcg64_state));
+  if (st == NULL) Rf_error("Failed to allocate PCG64 state.");
+  pcg64_seed_from_uint32(st, 42U);
+  SEXP ptr = PROTECT(R_MakeExternalPtr(st, R_NilValue, R_NilValue));
+  R_RegisterCFinalizerEx(ptr, pcg64_finalizer, TRUE);
+  UNPROTECT(1);
+  return ptr;
+}
+
+SEXP ffi_pcg64_seed(SEXP ptr, SEXP seed_sexp) {
+  pyrt_pcg64_state* st = get_pcg64(ptr);
+  double d = Rf_asReal(seed_sexp);
+  uint32_t s = (uint32_t) ((int64_t) d & 0xFFFFFFFFLL);
+  pcg64_seed_from_uint32(st, s);
+  return R_NilValue;
+}
+
+SEXP ffi_pcg64_random(SEXP ptr, SEXP n_sexp) {
+  pyrt_pcg64_state* st = get_pcg64(ptr);
+  R_xlen_t n = (R_xlen_t) Rf_asInteger(n_sexp);
+  SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+  double* p = REAL(out);
+  for (R_xlen_t i = 0; i < n; ++i) {
+    p[i] = pcg64_next_double(st);
+  }
+  UNPROTECT(1);
+  return out;
+}
+
+// Lemire's divisionless 32-bit bounded integer generator matching NumPy
+static uint32_t pcg64_bounded_uint32(pyrt_pcg64_state* st, uint32_t rng) {
+  uint32_t r_excl = rng + 1U;
+  if (r_excl == 0U) return pcg64_next32(st);
+  uint64_t m = (uint64_t) pcg64_next32(st) * (uint64_t) r_excl;
+  uint32_t l = (uint32_t) m;
+  if (l < r_excl) {
+    uint32_t threshold = (0U - r_excl) % r_excl;
+    while (l < threshold) {
+      m = (uint64_t) pcg64_next32(st) * (uint64_t) r_excl;
+      l = (uint32_t) m;
+    }
+  }
+  return (uint32_t) (m >> 32);
+}
+
+SEXP ffi_pcg64_integers(SEXP ptr, SEXP low_sexp, SEXP high_sexp, SEXP n_sexp) {
+  pyrt_pcg64_state* st = get_pcg64(ptr);
+  int low = Rf_asInteger(low_sexp);
+  int high = Rf_asInteger(high_sexp);
+  R_xlen_t n = (R_xlen_t) Rf_asInteger(n_sexp);
+  if (high <= low) Rf_error("high <= low in integers");
+  uint32_t rng = (uint32_t) (high - low - 1);
+  SEXP out = PROTECT(Rf_allocVector(INTSXP, n));
+  int* p = INTEGER(out);
+  for (R_xlen_t i = 0; i < n; ++i) {
+    p[i] = low + (int) pcg64_bounded_uint32(st, rng);
+  }
+  UNPROTECT(1);
+  return out;
+}
+
+

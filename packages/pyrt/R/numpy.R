@@ -178,6 +178,23 @@ ndarray_binary_op <- function(a, b, op_fn, dtype = NULL) {
     return(py_ndarray_raw(res, sa, dtype))
   }
 
+  # General N-D NumPy broadcasting
+  nd <- max(length(sa), length(sb))
+  pa <- c(rep(1L, nd - length(sa)), sa)
+  pb <- c(rep(1L, nd - length(sb)), sb)
+  if (all(pa == pb | pa == 1L | pb == 1L)) {
+    out_sh <- pmax(pa, pb)
+    arr_a <- array(na$.arr, dim = pa)
+    arr_b <- array(nb$.arr, dim = pb)
+    idx_a <- lapply(seq_len(nd), function(k) if (pa[[k]] == 1L) rep(1L, out_sh[[k]]) else seq_len(out_sh[[k]]))
+    idx_b <- lapply(seq_len(nd), function(k) if (pb[[k]] == 1L) rep(1L, out_sh[[k]]) else seq_len(out_sh[[k]]))
+    exp_a <- do.call(`[`, c(list(arr_a), idx_a, list(drop = FALSE)))
+    exp_b <- do.call(`[`, c(list(arr_b), idx_b, list(drop = FALSE)))
+    res <- op_fn(exp_a, exp_b)
+    dim(res) <- out_sh
+    return(py_ndarray_raw(res, out_sh, dtype))
+  }
+
   py_raise("ValueError", sprintf(
     "operands could not be broadcast together with shapes (%s) (%s)",
     paste(sa, collapse = ","), paste(sb, collapse = ",")
@@ -196,24 +213,41 @@ py_ndarray_raw <- function(arr, shape, dtype = NULL) {
 ndarray_reduce <- function(x, fn, axis = NULL, keepdims = FALSE) {
   sh <- x$.shape
   if (is.null(axis) || is_py_none(axis)) {
-    return(fn(as.vector(x$.arr)))
+    val <- fn(as.vector(x$.arr))
+    if (isTRUE(keepdims)) {
+      new_sh <- rep(1L, max(1L, length(sh)))
+      arr_kd <- if (length(new_sh) == 1L) val else array(val, dim = new_sh)
+      return(py_ndarray_raw(arr_kd, new_sh))
+    }
+    return(val)
   }
-  ax <- as.integer(axis)
-  if (ax < 0L) ax <- length(sh) + ax
-  if (ax < 0L || ax >= length(sh)) {
+  axes <- if (inherits(axis, "pyrt_tuple") || inherits(axis, "pyrt_list") || is.list(axis)) {
+    as.integer(unlist(coerce_items(axis)))
+  } else {
+    as.integer(axis)
+  }
+  axes <- ifelse(axes < 0L, length(sh) + axes, axes)
+  if (any(axes < 0L | axes >= length(sh))) {
     py_raise("ValueError", "axis is out of bounds for array")
   }
-  if (length(sh) == 1L) {
-    return(fn(as.vector(x$.arr)))
+  r_axes <- unique(axes + 1L)
+  keep_axes <- setdiff(seq_along(sh), r_axes)
+  if (length(keep_axes) == 0L) {
+    val <- fn(as.vector(x$.arr))
+    if (isTRUE(keepdims)) {
+      new_sh <- rep(1L, length(sh))
+      arr_kd <- if (length(new_sh) == 1L) val else array(val, dim = new_sh)
+      return(py_ndarray_raw(arr_kd, new_sh))
+    }
+    return(val)
   }
-  r_axis <- ax + 1L
-  keep_axes <- setdiff(seq_along(sh), r_axis)
   res <- apply(x$.arr, keep_axes, fn)
   new_sh <- sh[keep_axes]
   if (isTRUE(keepdims)) {
-    new_sh <- sh
-    new_sh[[r_axis]] <- 1L
-    dim(res) <- new_sh
+    full_sh <- sh
+    full_sh[r_axes] <- 1L
+    dim(res) <- full_sh
+    return(py_ndarray_raw(res, full_sh))
   } else if (length(new_sh) > 1L) {
     dim(res) <- new_sh
   }
@@ -697,6 +731,74 @@ build_numpy_module <- function() {
       nb <- py_ndarray(b)
       sum(as.vector(na$.arr) * as.vector(nb$.arr))
     },
+    einsum = function(subscripts, ...) {
+      sub <- gsub("\\s+", "", as.character(subscripts))
+      ops <- lapply(list(...), py_ndarray)
+      if (sub %in% c("ij->ji", "ji")) {
+        return(py_getattr(ops[[1L]], "T"))
+      }
+      if (sub %in% c("ii->", "ii")) {
+        return(sum(diag(ops[[1L]]$.arr)))
+      }
+      if (sub == "ii->i") {
+        d <- diag(ops[[1L]]$.arr)
+        return(py_ndarray_raw(d, length(d)))
+      }
+      if (sub %in% c("i->", "ij->", "ijk->")) {
+        return(sum(ops[[1L]]$.arr))
+      }
+      if (sub == "ij->i") {
+        v <- rowSums(ops[[1L]]$.arr)
+        return(py_ndarray_raw(v, length(v)))
+      }
+      if (sub == "ij->j") {
+        v <- colSums(ops[[1L]]$.arr)
+        return(py_ndarray_raw(v, length(v)))
+      }
+      if (sub %in% c("i,i->", "i,i", "ij,ij->", "ij,ij")) {
+        return(sum(ops[[1L]]$.arr * ops[[2L]]$.arr))
+      }
+      if (sub %in% c("i,i->i", "ij,ij->ij")) {
+        return(ndarray_binary_op(ops[[1L]], ops[[2L]], `*`))
+      }
+      if (sub == "i,j->ij") {
+        mat <- outer(as.vector(ops[[1L]]$.arr), as.vector(ops[[2L]]$.arr))
+        return(py_ndarray_raw(mat, dim(mat)))
+      }
+      if (sub == "ij,j->i") {
+        v <- as.vector(ops[[1L]]$.arr %*% as.vector(ops[[2L]]$.arr))
+        return(py_ndarray_raw(v, length(v)))
+      }
+      if (sub == "i,ij->j") {
+        v <- as.vector(as.vector(ops[[1L]]$.arr) %*% ops[[2L]]$.arr)
+        return(py_ndarray_raw(v, length(v)))
+      }
+      if (sub %in% c("ij,jk->ik", "ij,jk")) {
+        res <- ops[[1L]]$.arr %*% ops[[2L]]$.arr
+        return(py_ndarray_raw(res, dim(res)))
+      }
+      if (sub == "ij,kj->ik") {
+        res <- ops[[1L]]$.arr %*% t(ops[[2L]]$.arr)
+        return(py_ndarray_raw(res, dim(res)))
+      }
+      if (sub == "ji,jk->ik") {
+        res <- t(ops[[1L]]$.arr) %*% ops[[2L]]$.arr
+        return(py_ndarray_raw(res, dim(res)))
+      }
+      if (sub == "bij,bjk->bik") {
+        A <- ops[[1L]]$.arr
+        B <- ops[[2L]]$.arr
+        b_dim <- dim(A)[[1L]]
+        i_dim <- dim(A)[[2L]]
+        k_dim <- dim(B)[[3L]]
+        out <- array(0.0, dim = c(b_dim, i_dim, k_dim))
+        for (b in seq_len(b_dim)) {
+          out[b, , ] <- matrix(A[b, , ], nrow = i_dim) %*% matrix(B[b, , ], ncol = k_dim)
+        }
+        return(py_ndarray_raw(out, c(b_dim, i_dim, k_dim)))
+      }
+      py_raise("ValueError", sprintf("Unsupported einsum subscripts: '%s'", subscripts))
+    },
     # Reductions
     sum = function(a, axis = NULL, keepdims = FALSE) py_getattr(py_ndarray(a), "sum")(axis, keepdims),
     mean = function(a, axis = NULL, keepdims = FALSE) py_getattr(py_ndarray(a), "mean")(axis, keepdims),
@@ -837,6 +939,17 @@ build_numpy_module <- function() {
 }
 
 build_numpy_random_module <- function() {
+  shape_from_size <- function(size) {
+    if (is.null(size) || is_py_none(size)) return(NULL)
+    parse_shape_arg(size)
+  }
+
+  wrap_sized <- function(vals, sh, dtype = "float64") {
+    if (is.null(sh)) return(vals[[1L]])
+    arr <- rowmajor_to_r_array(vals, sh)
+    py_ndarray_raw(arr, sh, dtype)
+  }
+
   make_random_state <- function(seed = NULL) {
     ptr <- .Call(ffi_mt_new)
     do_seed <- function(s = NULL) {
@@ -848,17 +961,6 @@ build_numpy_random_module <- function() {
       invisible(py_none())
     }
     do_seed(seed)
-
-    shape_from_size <- function(size) {
-      if (is.null(size) || is_py_none(size)) return(NULL)
-      parse_shape_arg(size)
-    }
-
-    wrap_sized <- function(vals, sh, dtype = "float64") {
-      if (is.null(sh)) return(vals[[1L]])
-      arr <- rowmajor_to_r_array(vals, sh)
-      py_ndarray_raw(arr, sh, dtype)
-    }
 
     rs <- make_mod_env(
       seed = do_seed,
@@ -948,10 +1050,98 @@ build_numpy_random_module <- function() {
     rs
   }
 
+  # Modern NumPy `default_rng(seed)` backed by bit-exact C `PCG64` + `SeedSequence`
+  make_pcg64_generator <- function(seed = NULL) {
+    ptr <- .Call(ffi_pcg64_new)
+    if (is.null(seed) || is_py_none(seed)) {
+      .Call(ffi_pcg64_seed, ptr, as.double(as.integer(Sys.time())))
+    } else {
+      .Call(ffi_pcg64_seed, ptr, as.double(seed))
+    }
+
+    gen <- make_mod_env(
+      random = function(size = NULL) {
+        sh <- shape_from_size(size)
+        n <- if (is.null(sh)) 1L else as.integer(prod(sh))
+        vals <- .Call(ffi_pcg64_random, ptr, n)
+        wrap_sized(vals, sh, "float64")
+      },
+      uniform = function(low = 0.0, high = 1.0, size = NULL) {
+        sh <- shape_from_size(size)
+        n <- if (is.null(sh)) 1L else as.integer(prod(sh))
+        lo <- as.double(low)
+        hi <- as.double(high)
+        vals <- lo + (hi - lo) * .Call(ffi_pcg64_random, ptr, n)
+        wrap_sized(vals, sh, "float64")
+      },
+      integers = function(low, high = NULL, size = NULL, endpoint = FALSE) {
+        if (is.null(high) || is_py_none(high)) {
+          lo <- 0L
+          hi <- as.integer(low)
+        } else {
+          lo <- as.integer(low)
+          hi <- as.integer(high)
+        }
+        if (isTRUE(endpoint)) hi <- hi + 1L
+        sh <- shape_from_size(size)
+        n <- if (is.null(sh)) 1L else as.integer(prod(sh))
+        vals <- .Call(ffi_pcg64_integers, ptr, lo, hi, n)
+        wrap_sized(vals, sh, "int32")
+      },
+      standard_normal = function(size = NULL) {
+        sh <- shape_from_size(size)
+        n <- if (is.null(sh)) 1L else as.integer(prod(sh))
+        u1 <- pmax(.Call(ffi_pcg64_random, ptr, n), 1e-15)
+        u2 <- .Call(ffi_pcg64_random, ptr, n)
+        vals <- sqrt(-2.0 * log(u1)) * cos(2.0 * pi * u2)
+        wrap_sized(vals, sh, "float64")
+      },
+      normal = function(loc = 0.0, scale = 1.0, size = NULL) {
+        sn <- gen$standard_normal(size = size)
+        if (inherits(sn, "pyrt_ndarray")) {
+          return(py_ndarray_raw(as.double(loc) + as.double(scale) * sn$.arr, sn$.shape, "float64"))
+        }
+        as.double(loc) + as.double(scale) * sn
+      },
+      choice = function(a, size = NULL, replace = TRUE) {
+        pool <- if (is_int_like(a) && length(a) == 1L) seq(0L, as.integer(a) - 1L) else as.vector(py_ndarray(a)$.arr)
+        sh <- shape_from_size(size)
+        n <- if (is.null(sh)) 1L else as.integer(prod(sh))
+        idx <- .Call(ffi_pcg64_integers, ptr, 0L, length(pool), n) + 1L
+        vals <- pool[idx]
+        wrap_sized(vals, sh, infer_dtype(vals))
+      },
+      permutation = function(x) {
+        arr <- if (is_int_like(x) && length(x) == 1L) seq(0L, as.integer(x) - 1L) else as.vector(py_ndarray(x)$.arr)
+        n <- length(arr)
+        if (n <= 1L) return(py_ndarray(arr))
+        for (i in seq(n, 2L, by = -1L)) {
+          j <- .Call(ffi_pcg64_integers, ptr, 0L, i, 1L)[[1L]] + 1L
+          tmp <- arr[[i]]
+          arr[[i]] <- arr[[j]]
+          arr[[j]] <- tmp
+        }
+        py_ndarray(arr)
+      },
+      shuffle = function(x) {
+        if (inherits(x, "pyrt_ndarray")) {
+          p <- gen$permutation(x$.arr)
+          x$.arr <- p$.arr
+        } else if (inherits(x, "pyrt_list")) {
+          p <- gen$permutation(seq_along(x$.items) - 1L)
+          x$.items <- x$.items[as.integer(p$.arr) + 1L]
+        }
+        invisible(py_none())
+      }
+    )
+    gen
+  }
+
   default_rs <- make_random_state(19650218L)
   make_mod_env(
     RandomState = make_random_state,
-    default_rng = make_random_state,
+    Generator = make_pcg64_generator,
+    default_rng = make_pcg64_generator,
     seed = default_rs$seed,
     random = default_rs$random,
     random_sample = default_rs$random_sample,

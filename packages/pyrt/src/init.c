@@ -17,6 +17,10 @@ extern SEXP ffi_mt_setstate(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP ffi_mt_seed_uint32(SEXP, SEXP);
 extern SEXP ffi_mt_np_randn(SEXP, SEXP, SEXP, SEXP);
 extern SEXP ffi_mt_np_randint(SEXP, SEXP, SEXP, SEXP);
+extern SEXP ffi_pcg64_new(void);
+extern SEXP ffi_pcg64_seed(SEXP, SEXP);
+extern SEXP ffi_pcg64_random(SEXP, SEXP);
+extern SEXP ffi_pcg64_integers(SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"ffi_mt_new", (DL_FUNC) &ffi_mt_new, 0},
@@ -33,6 +37,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"ffi_mt_seed_uint32", (DL_FUNC) &ffi_mt_seed_uint32, 2},
     {"ffi_mt_np_randn", (DL_FUNC) &ffi_mt_np_randn, 4},
     {"ffi_mt_np_randint", (DL_FUNC) &ffi_mt_np_randint, 4},
+    {"ffi_pcg64_new", (DL_FUNC) &ffi_pcg64_new, 0},
+    {"ffi_pcg64_seed", (DL_FUNC) &ffi_pcg64_seed, 2},
+    {"ffi_pcg64_random", (DL_FUNC) &ffi_pcg64_random, 2},
+    {"ffi_pcg64_integers", (DL_FUNC) &ffi_pcg64_integers, 4},
     {NULL, NULL, 0}};
 
 void R_init_pyrt(DllInfo* dll) {

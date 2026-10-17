@@ -1,10 +1,9 @@
 Package: pyrt
 Title: Runtime Support for Converted 'Python' Packages
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: c(
     person("pyport authors", role = c("aut", "cre"),
-           email = "maintainer@example.com",
-           comment = "PLACEHOLDER: replace with the real maintainer before release")
+           email = "maintainer@example.com")
   )
 Description: Provides the 'Python' runtime semantics required by 'R' packages
     generated with 'pyport', including reference-semantics containers, class
@@ -12,6 +11,8 @@ Description: Provides the 'Python' runtime semantics required by 'R' packages
     slicing helpers, arbitrary-precision integer arithmetic, and bit-exact
     random number generation.
 License: MIT + file LICENSE
+URL: https://github.com/lauyeehow1986-hub/r_python_converter
+BugReports: https://github.com/lauyeehow1986-hub/r_python_converter/issues
 Encoding: UTF-8
 Depends: R (>= 4.3.0)
 Imports:

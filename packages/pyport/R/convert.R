@@ -520,3 +520,106 @@ collect_all_scope_vars <- function(scope) {
   }
   unique(vars)
 }
+
+#' Build a source tarball (`.tar.gz`) and optional platform binary (`.zip` / `.tgz`)
+#'
+#' Runs `R CMD build --no-manual` on a converted R package directory (such as
+#' the output of [convert()]) to produce a portable CRAN source tarball
+#' (`.tar.gz`), and optionally runs `R CMD INSTALL --build` to produce a
+#' pre-compiled platform binary package (`.zip` on Windows, `.tgz` on macOS,
+#' `.tar.gz` on Linux) that users can install without compilers or Python.
+#'
+#' @param pkg_dir Path to the converted R package directory (or the list
+#'   returned by [convert()]).
+#' @param dest_dir Directory where the built `.tar.gz` / `.zip` / `.tgz`
+#'   archive(s) should be placed. Defaults to `dirname(pkg_dir)`.
+#' @param binary Logical; if `TRUE`, also builds a platform binary archive via
+#'   `R CMD INSTALL --build`.
+#' @returns A list with components:
+#'   - `source_pkg`: path to the built `.tar.gz` source tarball.
+#'   - `binary_pkg`: path to the built platform binary archive (`.zip` / `.tgz`),
+#'     or `NULL` if `binary = FALSE`.
+#' @export
+#' @examples
+#' tmp_py <- tempfile("py_pkg_")
+#' dir.create(tmp_py)
+#' writeLines("def triple(x):\n    return x * 3", file.path(tmp_py, "mod.py"))
+#' out_r <- tempfile("r_pkg_")
+#' res <- convert(tmp_py, out_r, pkg_name = "triplepkg")
+#' built <- build_r_package(res$path, dest_dir = tempdir(), binary = FALSE)
+#' file.exists(built$source_pkg)
+#' unlink(c(tmp_py, out_r, built$source_pkg), recursive = TRUE)
+build_r_package <- function(pkg_dir, dest_dir = NULL, binary = FALSE) {
+  if (is.list(pkg_dir) && !is.null(pkg_dir$path)) {
+    pkg_dir <- pkg_dir$path
+  }
+  pkg_dir <- normalizePath(pkg_dir, winslash = "/", mustWork = TRUE)
+  if (is.null(dest_dir)) {
+    dest_dir <- dirname(pkg_dir)
+  }
+  if (!dir.exists(dest_dir)) {
+    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  dest_dir <- normalizePath(dest_dir, winslash = "/", mustWork = TRUE)
+
+  desc_mat <- read.dcf(file.path(pkg_dir, "DESCRIPTION"))
+  pkg_name <- as.character(desc_mat[1L, "Package"])
+  pkg_ver <- as.character(desc_mat[1L, "Version"])
+
+  r_exe <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rcmd.exe" else "R")
+  work_build <- tempfile("pyport_build_")
+  dir.create(work_build, recursive = TRUE)
+  on.exit(unlink(work_build, recursive = TRUE), add = TRUE)
+
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(work_build)
+
+  build_args <- if (.Platform$OS.type == "windows") {
+    c("build", "--no-manual", "--no-build-vignettes", shQuote(pkg_dir))
+  } else {
+    c("CMD", "build", "--no-manual", "--no-build-vignettes", shQuote(pkg_dir))
+  }
+  out_log <- system2(r_exe, build_args, stdout = TRUE, stderr = TRUE)
+  tar_name <- sprintf("%s_%s.tar.gz", pkg_name, pkg_ver)
+  built_tar <- file.path(work_build, tar_name)
+  if (!file.exists(built_tar)) {
+    stop(sprintf("R CMD build failed for '%s':\n%s", pkg_name, paste(out_log, collapse = "\n")))
+  }
+  final_tar <- file.path(dest_dir, tar_name)
+  file.copy(built_tar, final_tar, overwrite = TRUE)
+
+  final_bin <- NULL
+  if (isTRUE(binary)) {
+    tmp_lib <- file.path(work_build, "lib")
+    dir.create(tmp_lib, recursive = TRUE)
+    # Include current .libPaths() in R_LIBS so pyrt/gmp are found during --build
+    old_rlibs <- Sys.getenv("R_LIBS", unset = NA_character_)
+    Sys.setenv(R_LIBS = paste(c(tmp_lib, .libPaths()), collapse = .Platform$path.sep))
+    on.exit({
+      if (is.na(old_rlibs)) Sys.unsetenv("R_LIBS") else Sys.setenv(R_LIBS = old_rlibs)
+    }, add = TRUE)
+
+    inst_args <- if (.Platform$OS.type == "windows") {
+      c("INSTALL", "--build", "--no-multiarch", paste0("--library=", shQuote(tmp_lib)), shQuote(built_tar))
+    } else {
+      c("CMD", "INSTALL", "--build", paste0("--library=", shQuote(tmp_lib)), shQuote(built_tar))
+    }
+    bin_log <- system2(r_exe, inst_args, stdout = TRUE, stderr = TRUE)
+    cand <- list.files(work_build, pattern = sprintf("^%s_%s\\.(zip|tgz|tar\\.gz)$", pkg_name, pkg_ver), full.names = TRUE)
+    cand <- setdiff(cand, built_tar)
+    if (length(cand) == 0L) {
+      stop(sprintf("R CMD INSTALL --build failed for '%s':\n%s", pkg_name, paste(bin_log, collapse = "\n")))
+    }
+    final_bin <- file.path(dest_dir, basename(cand[[1L]]))
+    file.copy(cand[[1L]], final_bin, overwrite = TRUE)
+  }
+
+  list(
+    pkg_name = pkg_name,
+    version = pkg_ver,
+    source_pkg = final_tar,
+    binary_pkg = final_bin
+  )
+}
+

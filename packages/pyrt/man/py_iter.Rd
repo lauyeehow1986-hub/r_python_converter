@@ -12,6 +12,7 @@
 \alias{py_break_signal}
 \alias{py_for}
 \alias{py_range}
+\alias{py_range_seq}
 \alias{py_enumerate}
 \alias{py_zip}
 \alias{py_reversed}
@@ -38,6 +39,8 @@ py_break_signal()
 py_for(x, body, orelse = NULL)
 
 py_range(start, stop = NULL, step = 1L)
+
+py_range_seq(start, stop = NULL, step = 1L)
 
 py_enumerate(x, start = 0L)
 

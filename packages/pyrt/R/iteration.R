@@ -245,7 +245,7 @@ py_for <- function(x, body, orelse = NULL) {
 
 #' @rdname py_iter
 #' @export
-py_range <- function(start, stop = NULL, step = 1L) {
+py_range_seq <- function(start, stop = NULL, step = 1L) {
   if (is.null(stop)) {
     stop <- as.integer(start)
     start <- 0L
@@ -255,13 +255,27 @@ py_range <- function(start, stop = NULL, step = 1L) {
   }
   step <- as.integer(step)
   if (step == 0L) py_raise("ValueError", "range() arg 3 must not be zero")
-  ints <- if ((step > 0L && start >= stop) || (step < 0L && start <= stop)) {
+  if ((step > 0L && start >= stop) || (step < 0L && start <= stop)) {
     integer()
   } else if (step > 0L) {
     seq.int(start, stop - 1L, by = step)
   } else {
     seq.int(start, stop + 1L, by = step)
   }
+}
+
+#' @rdname py_iter
+#' @export
+py_range <- function(start, stop = NULL, step = 1L) {
+  ints <- py_range_seq(start, stop, step)
+  if (is.null(stop)) {
+    stop <- as.integer(start)
+    start <- 0L
+  } else {
+    start <- as.integer(start)
+    stop <- as.integer(stop)
+  }
+  step <- as.integer(step)
   r <- list(
     start = start,
     stop = stop,

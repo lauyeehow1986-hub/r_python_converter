@@ -998,11 +998,36 @@ transpile_python <- function(source, module_name = NULL) {
   emit_for <- function(node, ctx) {
     has_orelse <- length(node$orelse) > 0L
     flag <- if (has_orelse) gensym("broke") else NULL
-    it_var <- gensym("it")
-    step_var <- gensym("step")
     loop_ctx <- ctx
     loop_ctx$in_loop <- TRUE
     loop_ctx$loop_flag <- flag
+
+    # Fast-path optimization (Phase 8): lower `for <id> in range(...)` without
+    # `else` clause directly to a native R `for` loop over `pyrt::py_range_seq(...)`
+    # when `<id>` is a local variable.
+    if (!has_orelse &&
+        is_py_ast(node$target, "Name") &&
+        !(node$target$id %in% ctx$globals) &&
+        !(node$target$id %in% ctx$nonlocals) &&
+        is_py_ast(node$iter, "Call") &&
+        is_py_ast(node$iter$func, "Name") &&
+        identical(node$iter$func$id, "range") &&
+        !("range" %in% ctx$known_vars) &&
+        length(node$iter$keywords) == 0L &&
+        length(node$iter$args) %in% 1:3 &&
+        all(vapply(node$iter$args, function(a) !is_py_ast(a, "Starred"), logical(1)))) {
+      r_args <- paste(vapply(node$iter$args, emit_expr, character(1), ctx = ctx), collapse = ", ")
+      body_code <- emit_stmts(node$body, loop_ctx)
+      return(paste(
+        sprintf("for (%s in pyrt::py_range_seq(%s)) {", r_ident(node$target$id), r_args),
+        indent_lines(body_code, 2L),
+        "}",
+        sep = "\n"
+      ))
+    }
+
+    it_var <- gensym("it")
+    step_var <- gensym("step")
     bind_code <- emit_assign_target(node$target, paste0(step_var, "$value"), loop_ctx)
     body_code <- emit_stmts(node$body, loop_ctx)
     loop_code <- paste(
@@ -1029,6 +1054,7 @@ transpile_python <- function(source, module_name = NULL) {
 
   emit_function_value <- function(node, ctx, is_method = FALSE) {
     fn_scope <- analyze_python(node)$scope
+    esc_info <- analyze_escape(node)
     sig_info <- build_signature(node$args, ctx)
     all_pos <- c(node$args$posonlyargs, node$args$args)
     self_p <- if (is_method && length(all_pos) >= 1L) all_pos[[1L]]$arg else ctx$self_param
@@ -1039,6 +1065,7 @@ transpile_python <- function(source, module_name = NULL) {
       current_class = ctx$current_class,
       self_param = self_p
     )
+    fn_ctx$escape_info <- esc_info
 
     body_stmts <- node$body
     if (length(body_stmts) >= 1L &&

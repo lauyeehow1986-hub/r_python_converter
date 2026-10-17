@@ -119,3 +119,44 @@ test_that("numpy.random RandomState(seed) produces reproducible MT19937 draws", 
   expect_equal(n1$tolist()$as_r_list(), n2$tolist()$as_r_list())
 })
 
+test_that("numpy.random default_rng(seed) is bit-exact with NumPy PCG64 + SeedSequence", {
+  np <- py_stdlib("numpy")
+  g <- np$random$default_rng(42L)
+
+  r3 <- g$random(3L)
+  expect_equal(
+    r3$as_r_array(),
+    c(0.7739560485559633, 0.4388784397520523, 0.8585979199113825),
+    tolerance = 1e-16
+  )
+
+  i5 <- g$integers(0L, 100L, 5L)
+  expect_identical(i5$as_r_array(), c(8L, 69L, 20L, 9L, 52L))
+
+  g_fresh <- np$random$default_rng(42L)
+  expect_identical(g_fresh$integers(0L, 100L, 5L)$as_r_array(), c(8L, 77L, 65L, 43L, 43L))
+})
+
+test_that("multi-axis reduction, keepdims, N-D broadcasting, and einsum work", {
+  np <- py_stdlib("numpy")
+  a <- np$arange(24L)$reshape(list(2L, 3L, 4L))
+  s01 <- np$sum(a, axis = list(0L, 1L), keepdims = TRUE)
+  expect_equal(s01$shape$as_r_list(), list(1L, 1L, 4L))
+  expect_equal(as.vector(s01$as_r_array()), c(60, 66, 72, 78))
+
+  # 3D + 2D N-D broadcasting
+  b <- np$ones(list(3L, 4L))
+  c_arr <- py_add(a, b)
+  expect_equal(c_arr$shape$as_r_list(), list(2L, 3L, 4L))
+
+  # einsum
+  m1 <- np$array(list(list(1, 2), list(3, 4)))
+  m2 <- np$array(list(list(5, 6), list(7, 8)))
+  expect_equal(np$einsum("ii->", m1), 5)
+  expect_equal(np$einsum("ii->i", m1)$as_r_array(), c(1, 4))
+  mm <- np$einsum("ij,jk->ik", m1, m2)
+  expect_equal(mm$tolist()$as_r_list()[[1L]]$as_r_list(), list(19, 22))
+  expect_equal(mm$tolist()$as_r_list()[[2L]]$as_r_list(), list(43, 50))
+})
+
+

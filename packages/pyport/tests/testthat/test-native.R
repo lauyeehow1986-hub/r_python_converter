@@ -92,3 +92,89 @@ def process(items):
   expect_true(all(c("returned_list", "aliased_buf") %in% esc$escaping))
 })
 
+test_that("PyMethodDef + PyArg_ParseTuple and Cython cpdef lower cleanly", {
+  c_pymeth <- "
+#include <Python.h>
+
+static PyObject* py_clamp(PyObject *self, PyObject *args) {
+    double x = 0.0, lo = 0.0, hi = 1.0;
+    if (!PyArg_ParseTuple(args, \"ddd\", &x, &lo, &hi)) return NULL;
+    if (x < lo) return PyFloat_FromDouble(lo);
+    if (x > hi) return PyFloat_FromDouble(hi);
+    return PyFloat_FromDouble(x);
+}
+
+static PyMethodDef ClampMethods[] = {
+    {\"clamp_val\", py_clamp, METH_VARARGS, \"Clamp double value.\"},
+    {NULL, NULL, 0, NULL}
+};
+"
+  bridged <- transpile_c_extension(c_pymeth, pkg_name = "clamppkg")
+  expect_equal(bridged$functions, "clamp_val")
+  expect_match(bridged$c_code, "SEXP r_pymeth_clamp_val", fixed = TRUE)
+  expect_match(bridged$r_code, "clamp_val <- function\\(\\.\\.\\.\\)", perl = TRUE)
+
+  cython_src <- "
+cpdef double cy_hypot2(double a, double b):
+    cdef double s = a * a + b * b
+    return s
+"
+  cy_bridged <- transpile_c_extension(cython_src, pkg_name = "cypkg")
+  expect_equal(cy_bridged$functions, "cy_hypot2")
+  expect_match(cy_bridged$c_code, "SEXP r_wrap_cy_hypot2", fixed = TRUE)
+})
+
+test_that("PyO3 #[pyclass] and #[pymethods] lower to extendr impl blocks", {
+  rs_src <- "
+use pyo3::prelude::*;
+
+#[pyclass]
+pub struct Counter {
+    val: i32,
+}
+
+#[pymethods]
+impl Counter {
+    #[new]
+    pub fn new(start: i32) -> Self {
+        Counter { val: start }
+    }
+}
+"
+  out <- transpile_pyo3_rust(rs_src, pkg_name = "cntpkg")
+  expect_equal(out$classes, "Counter")
+  expect_match(out$rust_code, "impl Counter;", fixed = TRUE)
+  expect_match(out$r_wrappers, "Counter\\$new", perl = TRUE)
+})
+
+test_that("range() for-loop fast path and build_r_package() work", {
+  r_code <- as.character(transpile_python("
+def sum_to(n):
+    acc = 0
+    for i in range(n):
+        acc = acc + i
+    return acc
+"))
+  expect_match(r_code, "for \\(i in pyrt::py_range_seq\\(n\\)\\)", perl = TRUE)
+  env <- eval_python("
+def sum_to(n):
+    acc = 0
+    for i in range(n):
+        acc = acc + i
+    return acc
+")
+  expect_identical(env$sum_to(10L), 45L)
+
+  tmp_py <- tempfile("py_bpkg_")
+  dir.create(tmp_py)
+  on.exit(unlink(tmp_py, recursive = TRUE), add = TRUE)
+  writeLines("def add1(x):\n    return x + 1", file.path(tmp_py, "add1.py"))
+  out_r <- tempfile("r_bpkg_")
+  on.exit(unlink(out_r, recursive = TRUE), add = TRUE)
+  res <- convert(tmp_py, out_r, pkg_name = "add1pkg")
+  built <- build_r_package(res$path, dest_dir = tempdir(), binary = FALSE)
+  on.exit(unlink(built$source_pkg), add = TRUE)
+  expect_true(file.exists(built$source_pkg))
+})
+
+
