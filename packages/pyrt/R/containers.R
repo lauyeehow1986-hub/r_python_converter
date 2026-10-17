@@ -155,6 +155,7 @@ py_list <- function(x = NULL) {
   self$as_r_list <- function() self$.items
 
   self$append <- function(item) {
+    force(item)
     self$.items[length(self$.items) + 1L] <- list(item)
     invisible(NULL)
   }
@@ -281,6 +282,7 @@ py_dict <- function(x = NULL, ...) {
   self$len <- function() length(self$.keys)
 
   self$set <- function(key, value) {
+    force(value)
     loc <- find_pos(key)
     if (loc$idx > 0L) {
       self$.vals[loc$idx] <- list(value)
@@ -456,6 +458,7 @@ py_set <- function(x = NULL) {
   self$contains <- function(v) find_pos(v)$idx > 0L
 
   self$add <- function(v) {
+    force(v)
     loc <- find_pos(v)
     if (loc$idx == 0L) {
       n <- length(self$.items) + 1L

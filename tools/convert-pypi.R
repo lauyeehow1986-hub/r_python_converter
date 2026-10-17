@@ -16,6 +16,7 @@ suppressPackageStartupMessages({
 })
 
 download_pypi_sdist <- function(pkg, dest_dir = tempdir()) {
+  dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
   url <- sprintf("https://pypi.org/pypi/%s/json", pkg)
   con <- url(url)
   on.exit(close(con), add = TRUE)
