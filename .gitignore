@@ -23,4 +23,5 @@ __pycache__/
 
 # Outputs
 out/
+build/
 scratch/

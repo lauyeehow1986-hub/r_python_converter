@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="312" height="292" viewBox="0 0 312 292">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="156.0" y="30" text-anchor="middle" font-size="15" font-weight="bold">Matrix Heatmap (Viridis Colormap)</text>
+<text x="104.0" y="50" text-anchor="middle" font-size="11" fill="#374151">Q1</text>
+<text x="152.0" y="50" text-anchor="middle" font-size="11" fill="#374151">Q2</text>
+<text x="200.0" y="50" text-anchor="middle" font-size="11" fill="#374151">Q3</text>
+<text x="248.0" y="50" text-anchor="middle" font-size="11" fill="#374151">Q4</text>
+<text x="70" y="88.0" text-anchor="end" font-size="11" fill="#374151">Region A</text>
+<rect x="80" y="60" width="47" height="47" fill="#440154" rx="2"/>
+<text x="104.0" y="88.0" text-anchor="middle" font-size="10" fill="#111827">12.0</text>
+<rect x="128" y="60" width="47" height="47" fill="#7d5391" rx="2"/>
+<text x="152.0" y="88.0" text-anchor="middle" font-size="10" fill="#111827">45.0</text>
+<rect x="176" y="60" width="47" height="47" fill="#9a8d65" rx="2"/>
+<text x="200.0" y="88.0" text-anchor="middle" font-size="10" fill="#ffffff">78.0</text>
+<rect x="224" y="60" width="47" height="47" fill="#5a1f83" rx="2"/>
+<text x="248.0" y="88.0" text-anchor="middle" font-size="10" fill="#111827">23.0</text>
+<text x="70" y="136.0" text-anchor="end" font-size="11" fill="#374151">Region B</text>
+<rect x="80" y="108" width="47" height="47" fill="#92797e" rx="2"/>
+<text x="104.0" y="136.0" text-anchor="middle" font-size="10" fill="#ffffff">65.0</text>
+<rect x="128" y="108" width="47" height="47" fill="#9d9a48" rx="2"/>
+<text x="152.0" y="136.0" text-anchor="middle" font-size="10" fill="#ffffff">89.0</text>
+<rect x="176" y="108" width="47" height="47" fill="#6d3a90" rx="2"/>
+<text x="200.0" y="136.0" text-anchor="middle" font-size="10" fill="#111827">34.0</text>
+<rect x="224" y="108" width="47" height="47" fill="#8a698a" rx="2"/>
+<text x="248.0" y="136.0" text-anchor="middle" font-size="10" fill="#ffffff">56.0</text>
+<text x="70" y="184.0" text-anchor="end" font-size="11" fill="#374151">Region C</text>
+<rect x="80" y="156" width="47" height="47" fill="#9d9b45" rx="2"/>
+<text x="104.0" y="184.0" text-anchor="middle" font-size="10" fill="#ffffff">90.0</text>
+<rect x="128" y="156" width="47" height="47" fill="#561a80" rx="2"/>
+<text x="152.0" y="184.0" text-anchor="middle" font-size="10" fill="#111827">21.0</text>
+<rect x="176" y="156" width="47" height="47" fill="#937c7b" rx="2"/>
+<text x="200.0" y="184.0" text-anchor="middle" font-size="10" fill="#ffffff">67.0</text>
+<rect x="224" y="156" width="47" height="47" fill="#9d994b" rx="2"/>
+<text x="248.0" y="184.0" text-anchor="middle" font-size="10" fill="#ffffff">88.0</text>
+<text x="70" y="232.0" text-anchor="end" font-size="11" fill="#374151">Region D</text>
+<rect x="80" y="204" width="47" height="47" fill="#7a4f91" rx="2"/>
+<text x="104.0" y="232.0" text-anchor="middle" font-size="10" fill="#111827">43.0</text>
+<rect x="128" y="204" width="47" height="47" fill="#998a69" rx="2"/>
+<text x="152.0" y="232.0" text-anchor="middle" font-size="10" fill="#ffffff">76.0</text>
+<rect x="176" y="204" width="47" height="47" fill="#9ea136" rx="2"/>
+<text x="200.0" y="232.0" text-anchor="middle" font-size="10" fill="#ffffff">95.0</text>
+<rect x="224" y="204" width="47" height="47" fill="#501178" rx="2"/>
+<text x="248.0" y="232.0" text-anchor="middle" font-size="10" fill="#111827">18.0</text>
+</svg>
