@@ -2,8 +2,8 @@ Package: pyport
 Title: Convert 'Python' Packages into Native 'R' Packages
 Version: 0.1.0
 Authors@R: c(
-    person("pyport authors", role = c("aut", "cre"),
-           email = "maintainer@example.com"),
+    person("Yee How", "Lau", role = c("aut", "cre", "cph"),
+           email = "lauyeehow1986@gmail.com"),
     person("Max", "Brunsfeld", role = "cph",
            comment = "Author of the vendored 'tree-sitter-python' grammar"),
     person("Tree-sitter authors", role = "cph",

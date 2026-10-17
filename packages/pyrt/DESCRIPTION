@@ -2,8 +2,8 @@ Package: pyrt
 Title: Runtime Support for Converted 'Python' Packages
 Version: 0.1.0
 Authors@R: c(
-    person("pyport authors", role = c("aut", "cre"),
-           email = "maintainer@example.com")
+    person("Yee How", "Lau", role = c("aut", "cre", "cph"),
+           email = "lauyeehow1986@gmail.com")
   )
 Description: Provides the 'Python' runtime semantics required by 'R' packages
     generated with 'pyport', including reference-semantics containers, class

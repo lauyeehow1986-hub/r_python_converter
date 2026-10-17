@@ -12,12 +12,16 @@ permissions:
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }}) (pkg = ${{ matrix.pkg }})
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }}) (pkg = ${{ matrix.pkg.name }})
 
     strategy:
       fail-fast: false
       matrix:
-        pkg: ["packages/pyrt", "packages/pyport"]
+        pkg:
+          - name: "packages/pyrt"
+            extra: "any::rcmdcheck"
+          - name: "packages/pyport"
+            extra: "any::rcmdcheck, local::../pyrt"
         config:
           - {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
@@ -43,13 +47,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          working-directory: ${{ matrix.pkg }}
-          extra-packages: any::rcmdcheck
+          working-directory: ${{ matrix.pkg.name }}
+          extra-packages: ${{ matrix.pkg.extra }}
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
-          working-directory: ${{ matrix.pkg }}
+          working-directory: ${{ matrix.pkg.name }}
           upload-snapshots: true
           build_args: 'c("--no-manual")'
           args: 'c("--no-manual", "--as-cran")'

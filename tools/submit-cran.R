@@ -44,8 +44,10 @@ if (length(args) >= 2L && args[[1L]] == "--submit") {
   target <- args[[2L]]
   pkg_dir <- file.path("packages", target)
   check_maintainer(pkg_dir)
-  if (!requireNamespace("devtools", quietly = TRUE)) {
-    stop("Install `devtools` to submit directly from R: install.packages('devtools')")
+  tarball <- file.path("dist", sprintf("%s_0.1.0.tar.gz", target))
+  if (!file.exists(tarball)) {
+    stop(sprintf("Tarball not found: '%s'. Run without --submit first.", tarball))
   }
-  devtools::submit_cran(pkg = pkg_dir)
+  cat("Submitting", tarball, "to CRAN via devtools:::upload_cran...\n")
+  devtools:::upload_cran(pkg = pkg_dir, built_path = tarball)
 }
