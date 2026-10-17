@@ -1,0 +1,29 @@
+Package: pyrt
+Title: Runtime Support for Converted 'Python' Packages
+Version: 0.0.0.9000
+Authors@R: c(
+    person("pyport authors", role = c("aut", "cre"),
+           email = "maintainer@example.com",
+           comment = "PLACEHOLDER: replace with the real maintainer before release")
+  )
+Description: Provides the 'Python' runtime semantics required by 'R' packages
+    generated with 'pyport', including reference-semantics containers, class
+    and method-resolution-order dispatch, exception hierarchies, iteration and
+    slicing helpers, arbitrary-precision integer arithmetic, and bit-exact
+    random number generation.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports:
+    gmp (>= 0.7-1),
+    R6 (>= 2.5.1),
+    stats,
+    utils
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

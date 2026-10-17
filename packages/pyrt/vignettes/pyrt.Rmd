@@ -1,0 +1,42 @@
+---
+title: "Python Runtime Semantics in pyrt"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Python Runtime Semantics in pyrt}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+`pyrt` provides the Python 3 runtime semantics required by R packages generated
+with `pyport`:
+
+- Reference-semantics containers (`py_list()`, `py_dict()`, `py_set()`, `py_tuple()`)
+- C3 MRO classes, multiple inheritance, descriptors (`py_property()`, `py_super()`)
+- 0-based negative and step slicing (`py_slice()`, `py_getitem()`, `py_setitem()`)
+- Arbitrary-precision integers (`gmp::bigz`) with floor division toward $-\infty$
+- Bit-exact CPython 3.12 `random` (`py_random`) and `numpy.random.RandomState`
+- Standard library (`math`, `itertools`, `functools`, `collections`, `datetime`, `re`, `json`)
+  and `numpy` / `scipy` / `pandas` bridges via `py_stdlib()`
+
+```{r}
+library(pyrt)
+
+# Reference-semantics list
+xs <- py_list(list(10L, 20L, 30L))
+alias <- xs
+xs$append(40L)
+py_len(alias)
+
+# Bit-exact CPython 3.12 random
+rng <- py_random$Random(42L)
+rng$random()
+```

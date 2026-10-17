@@ -1,0 +1,26 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+*.Rcheck/
+*.tar.gz
+
+# Compiled objects
+*.o
+*.so
+*.dll
+*.dylib
+packages/*/src/*.o
+packages/*/src/*.dll
+packages/*/src/*.so
+
+# Python (dev-only tooling)
+__pycache__/
+*.pyc
+.venv/
+
+# Outputs
+out/
+scratch/

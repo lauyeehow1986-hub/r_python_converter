@@ -1,0 +1,6 @@
+# Declarative stdlib / third-party mapping rules (populated in Phases 4-5).
+#
+# Each `<module>.yaml` file declares how a Python module's functions, classes,
+# methods, and constants map to `pyrt` helpers or base/CRAN R functions.
+schema_version: 1
+modules: {}

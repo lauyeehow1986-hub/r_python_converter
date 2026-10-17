@@ -1,0 +1,22 @@
+test_that("py_none, py_ellipsis, and py_bool follow Python truthiness", {
+  expect_true(is_py_none(py_none()))
+  expect_false(is_py_none(0L))
+  expect_true(is_py_ellipsis(py_ellipsis()))
+  expect_identical(format(py_ellipsis()), "Ellipsis")
+
+  expect_false(py_bool(py_none()))
+  expect_false(py_bool(FALSE))
+  expect_false(py_bool(0L))
+  expect_false(py_bool(0.0))
+  expect_false(py_bool(0+0i))
+  expect_false(py_bool(gmp::as.bigz(0)))
+  expect_false(py_bool(""))
+  expect_false(py_bool(list()))
+
+  expect_true(py_bool(TRUE))
+  expect_true(py_bool(1L))
+  expect_true(py_bool(gmp::as.bigz("99999999999999999999999999999")))
+  expect_true(py_bool("0"))
+  expect_true(py_bool(list(1L)))
+  expect_true(py_bool(py_ellipsis()))
+})

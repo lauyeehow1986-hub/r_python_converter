@@ -1,0 +1,68 @@
+---
+title: "Getting Started with pyport"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with pyport}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+`pyport` converts Python 3 packages into standalone, native R packages that run
+across Windows, macOS, and Linux **without any Python installation, `reticulate`,
+virtualenv, or `PATH` changes**. Generated packages depend only on the
+lightweight CRAN-clean runtime package `pyrt` (and `gmp` for arbitrary-precision
+integers).
+
+## Quick Start: Evaluating Python Code Directly in R
+
+```{r}
+library(pyport)
+library(pyrt)
+
+mod <- eval_python("
+import itertools
+
+def chunked_sums(items, size):
+    out = []
+    it = iter(items)
+    while True:
+        batch = list(itertools.islice(it, size))
+        if not batch:
+            break
+        out.append(sum(batch))
+    return out
+")
+
+res <- mod$chunked_sums(py_list(as.list(1:10)), 3L)
+res$as_r_list()
+```
+
+## Generating a Standalone R Package with `pyport::convert()`
+
+Given a Python package directory, `.tar.gz` sdist, `.whl` wheel, or single
+`.py` file, call `convert()` to emit a complete, `R CMD check`-clean R package:
+
+```{r}
+py_file <- tempfile(fileext = ".py")
+writeLines(c(
+  "def moving_average(xs, window=3):",
+  "    out = []",
+  "    for i in range(len(xs) - window + 1):",
+  "        out.append(sum(xs[i:i+window]) / window)",
+  "    return out"
+), py_file)
+
+pkg_dir <- file.path(tempdir(), "movingavg")
+info <- convert(py_file, pkg_dir, pkg_name = "movingavg")
+info$exports
+unlink(c(py_file, pkg_dir), recursive = TRUE)
+```

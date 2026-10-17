@@ -1,0 +1,7 @@
+# Normalize to LF everywhere (CRAN tarballs and vendored C sources).
+* text=auto eol=lf
+*.rds binary
+*.rda binary
+*.tar.gz binary
+*.zip binary
+*.png binary
