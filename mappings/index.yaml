@@ -1,6 +1,69 @@
-# Declarative stdlib / third-party mapping rules (populated in Phases 4-5).
+# Declarative stdlib / third-party mapping rules for `pyport` and `pyrt`
 #
-# Each `<module>.yaml` file declares how a Python module's functions, classes,
-# methods, and constants map to `pyrt` helpers or base/CRAN R functions.
+# Each entry declares how a Python module's functions, classes, methods, and
+# constants map to `pyrt` runtime helpers or base/CRAN R functions.
 schema_version: 1
-modules: {}
+modules:
+  math:
+    provider: "pyrt::py_stdlib('math')"
+    functions:
+      - [ceil, floor, trunc, fabs, factorial, isqrt, gcd, lcm, comb, perm]
+      - [sqrt, exp, expm1, log, log2, log10, log1p, pow, hypot, dist, prod, fsum]
+      - [sin, cos, tan, asin, acos, atan, atan2, sinh, cosh, tanh, asinh, acosh, atanh]
+      - [degrees, radians, copysign, isfinite, isinf, isnan, isclose, erf, erfc, gamma, lgamma]
+    constants: [pi, e, tau, inf, nan]
+  random:
+    provider: "pyrt::py_random"
+    classes: [Random]
+    functions:
+      - [seed, getstate, setstate, random, getrandbits, randrange, randint]
+      - [choice, shuffle, sample, choices, uniform, triangular, gauss, normalvariate]
+      - [lognormvariate, expovariate, vonmisesvariate, gammavariate, betavariate, paretovariate, weibullvariate]
+  itertools:
+    provider: "pyrt::py_stdlib('itertools')"
+    functions:
+      - [count, cycle, repeat, chain, islice, compress, dropwhile, takewhile]
+      - [filterfalse, starmap, accumulate, zip_longest, product, permutations]
+      - [combinations, combinations_with_replacement, groupby, tee, batched, pairwise]
+  functools:
+    provider: "pyrt::py_stdlib('functools')"
+    functions: [reduce, partial, lru_cache, cache, wraps, total_ordering, cmp_to_key]
+  operator:
+    provider: "pyrt::py_stdlib('operator')"
+    functions:
+      - [add, sub, mul, truediv, floordiv, mod, pow, neg, pos, abs, invert]
+      - [and_, or_, xor, lshift, rshift, eq, ne, lt, le, gt, ge, not_, truth]
+      - [is_, is_not, contains, getitem, setitem, delitem, itemgetter, attrgetter, methodcaller]
+  collections:
+    provider: "pyrt::py_stdlib('collections')"
+    classes: [deque, defaultdict, Counter, OrderedDict, namedtuple]
+  re:
+    provider: "pyrt::py_stdlib('re')"
+    functions: [compile, search, match, fullmatch, findall, sub, split, escape]
+    constants: [IGNORECASE, I, MULTILINE, M, DOTALL, S]
+  json:
+    provider: "pyrt::py_stdlib('json')"
+    functions: [dumps, loads]
+  datetime:
+    provider: "pyrt::py_stdlib('datetime')"
+    classes: [date, time, datetime, timedelta]
+  dataclasses:
+    provider: "pyrt::py_stdlib('dataclasses')"
+    functions: [dataclass, field]
+  numpy:
+    provider: "pyrt::py_stdlib('numpy')"
+    classes: [ndarray]
+    submodules: [linalg, fft, random]
+    functions:
+      - [array, asarray, zeros, ones, full, empty, zeros_like, ones_like, eye, identity, diag]
+      - [arange, linspace, reshape, transpose, concatenate, vstack, hstack, where, clip]
+      - [dot, matmul, outer, inner, sum, mean, std, var, min, max, argmin, argmax, cumsum]
+      - [median, percentile, all, any, allclose, isclose, diff, unique, sort, argsort]
+      - [corrcoef, cov, polyfit, polyval, sqrt, exp, log, sin, cos, tan, abs, floor, ceil, round]
+  scipy:
+    provider: "pyrt::py_stdlib('scipy')"
+    submodules: [special, stats, optimize, linalg]
+  pandas:
+    provider: "pyrt::py_stdlib('pandas')"
+    classes: [Series, DataFrame]
+    functions: [isna, notna]

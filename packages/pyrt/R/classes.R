@@ -353,6 +353,9 @@ py_getattr <- function(obj, attr, default = missing_sentinel) {
     }
   } else if (is.list(obj) && attr %in% names(obj)) {
     return(obj[[attr]])
+  } else if (is.function(obj) || inherits(obj, "pyrt_callable_obj")) {
+    a_val <- base::attr(obj, attr, exact = TRUE)
+    if (!is.null(a_val)) return(a_val)
   }
   if (!inherits(default, "pyrt_missing")) return(default)
   py_raise("AttributeError", sprintf("object has no attribute '%s'", attr))

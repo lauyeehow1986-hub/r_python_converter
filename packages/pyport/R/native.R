@@ -89,7 +89,7 @@ cpython_shim_header <- function() {
     "#include <string.h>",
     "",
     "/* Map PyObject* directly to R SEXP */",
-    "typedef SEXP PyObject;",
+    "typedef struct SEXPREC PyObject;",
     "typedef R_xlen_t Py_ssize_t;",
     "",
     "#define Py_None R_NilValue",

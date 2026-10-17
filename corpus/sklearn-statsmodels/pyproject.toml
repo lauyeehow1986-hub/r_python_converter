@@ -1,0 +1,5 @@
+[project]
+name = "sklearn-statsmodels-lite"
+version = "0.1.0"
+description = "Corpus fixture: NumPy/SciPy linear regression and standardization"
+license = {text = "BSD-3-Clause"}

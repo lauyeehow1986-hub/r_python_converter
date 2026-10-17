@@ -1,0 +1,5 @@
+[project]
+name = "more-itertools"
+version = "10.5.0"
+description = "More routines for operating on iterables, beyond itertools"
+license = "MIT"

@@ -1,0 +1,5 @@
+[project]
+name = "attrs-lite"
+version = "0.1.0"
+description = "Corpus fixture: pure-Python record/validator helpers inspired by attrs"
+license = {text = "MIT"}

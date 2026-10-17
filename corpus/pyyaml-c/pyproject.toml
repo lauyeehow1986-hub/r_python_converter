@@ -1,0 +1,5 @@
+[project]
+name = "pyyaml-c-lite"
+version = "0.1.0"
+description = "Corpus fixture: hybrid Python + CPython C extension key-value parser"
+license = {text = "MIT"}

@@ -380,6 +380,25 @@ convert <- function(source, dest, pkg_name = NULL, overwrite = TRUE) {
     }
   }
 
+  # Bridge Rust PyO3 extensions to extendr if present
+  if (native_ext$has_rust && length(native_ext$rust_files) > 0L) {
+    dir.create(file.path(dest, "src", "rust", "src"), recursive = TRUE, showWarnings = FALSE)
+    rs_srcs <- lapply(native_ext$rust_files, function(rf) {
+      paste(readLines(file.path(src_dir, rf), warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+    })
+    bridged_rs <- transpile_pyo3_rust(paste(rs_srcs, collapse = "\n\n"), pkg_name = r_pkg)
+    if (length(bridged_rs$functions) > 0L) {
+      has_dynlib <- TRUE
+      write_lf(bridged_rs$rust_code, file.path(dest, "src", "rust", "src", "lib.rs"))
+      write_lf(bridged_rs$makevars, file.path(dest, "src", "Makevars"))
+      write_lf(bridged_rs$makevars_win, file.path(dest, "src", "Makevars.win"))
+      write_lf(bridged_rs$r_wrappers, file.path(dest, "R", "91-rust-bridge.R"))
+      r_files <- c(r_files, "91-rust-bridge.R")
+      eval(parse(text = bridged_rs$r_wrappers, keep.source = FALSE), envir = eval_env)
+      all_exports <- unique(c(all_exports, bridged_rs$functions))
+    }
+  }
+
   # Keep only exports that actually exist in `eval_env` and are valid identifiers.
   all_exports <- Filter(function(sym) {
     exists(sym, envir = eval_env, inherits = FALSE) &&
@@ -461,9 +480,10 @@ convert <- function(source, dest, pkg_name = NULL, overwrite = TRUE) {
   )
 
   if (length(discovered$test_files) > 0L) {
+    pkg_and_mods <- unique(c(meta$name, tools::file_path_sans_ext(basename(discovered$files))))
     for (tf in discovered$test_files) {
       py_test_src <- paste(readLines(tf, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-      r_test_code <- convert_pytest_code(py_test_src, pkg_name = meta$name)
+      r_test_code <- convert_pytest_code(py_test_src, pkg_name = pkg_and_mods)
       out_tname <- paste0(
         "test-",
         gsub("[^A-Za-z0-9_]", "-", sub("^test_", "", tools::file_path_sans_ext(basename(tf)))),

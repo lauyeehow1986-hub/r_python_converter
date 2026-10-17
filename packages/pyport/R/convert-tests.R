@@ -182,7 +182,7 @@ convert_pytest_code <- function(source, pkg_name = NULL) {
     if (st$kind == "ImportFrom" && !is.null(pkg_name) && !is.null(st$module)) {
       norm <- function(x) tolower(gsub("[-_.]", "", x))
       mod_top <- strsplit(st$module, ".", fixed = TRUE)[[1L]][[1L]]
-      if (identical(norm(mod_top), norm(pkg_name))) next
+      if (norm(mod_top) %in% norm(pkg_name)) next
     }
 
     if (st$kind == "FunctionDef" && grepl("^test_", st$name)) {

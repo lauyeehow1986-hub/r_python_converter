@@ -1,0 +1,5 @@
+[project]
+name = "orjson-rust-lite"
+version = "0.1.0"
+description = "Corpus fixture: PyO3 Rust extension transformed to extendr"
+license = {text = "MIT OR Apache-2.0"}
