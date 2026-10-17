@@ -29,9 +29,11 @@ build_local_cran_repo <- function(repo_dir = file.path(tempdir(), "pyport_cran_r
   dir.create(src_contrib, recursive = TRUE, showWarnings = FALSE)
   dir.create(bin_contrib, recursive = TRUE, showWarnings = FALSE)
 
+  should_build_bin <- .Platform$OS.type == "windows" || grepl("darwin", R.version$os)
+
   # 1. Build `pyrt` and `pyport` source tarballs and platform binaries
   for (core_pkg in c("packages/pyrt", "packages/pyport")) {
-    built <- build_r_package(core_pkg, dest_dir = src_contrib, binary = TRUE)
+    built <- build_r_package(core_pkg, dest_dir = src_contrib, binary = should_build_bin)
     if (!is.null(built$binary_pkg) && bin_contrib != src_contrib) {
       file.rename(built$binary_pkg, file.path(bin_contrib, basename(built$binary_pkg)))
     }
@@ -46,7 +48,7 @@ build_local_cran_repo <- function(repo_dir = file.path(tempdir(), "pyport_cran_r
   for (nm in list.dirs("corpus", recursive = FALSE, full.names = FALSE)) {
     if (nm == "orjson-rust") next
     res <- convert(file.path("corpus", nm), file.path(work_conv, nm))
-    built <- build_r_package(res$path, dest_dir = src_contrib, binary = TRUE)
+    built <- build_r_package(res$path, dest_dir = src_contrib, binary = should_build_bin)
     if (!is.null(built$binary_pkg) && bin_contrib != src_contrib) {
       file.rename(built$binary_pkg, file.path(bin_contrib, basename(built$binary_pkg)))
     }

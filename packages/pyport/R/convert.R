@@ -606,7 +606,7 @@ build_r_package <- function(pkg_dir, dest_dir = NULL, binary = FALSE) {
       c("CMD", "INSTALL", "--build", paste0("--library=", shQuote(tmp_lib)), shQuote(built_tar))
     }
     bin_log <- system2(r_exe, inst_args, stdout = TRUE, stderr = TRUE)
-    cand <- list.files(work_build, pattern = sprintf("^%s_%s\\.(zip|tgz|tar\\.gz)$", pkg_name, pkg_ver), full.names = TRUE)
+    cand <- list.files(work_build, pattern = sprintf("^%s_%s.*\\.(zip|tgz|tar\\.gz)$", pkg_name, pkg_ver), full.names = TRUE)
     cand <- setdiff(cand, built_tar)
     if (length(cand) == 0L) {
       stop(sprintf("R CMD INSTALL --build failed for '%s':\n%s", pkg_name, paste(bin_log, collapse = "\n")))
