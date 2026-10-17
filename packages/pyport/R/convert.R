@@ -576,9 +576,9 @@ build_r_package <- function(pkg_dir, dest_dir = NULL, binary = FALSE) {
   setwd(work_build)
 
   build_args <- if (.Platform$OS.type == "windows") {
-    c("build", "--no-manual", "--no-build-vignettes", shQuote(pkg_dir))
+    c("build", "--no-manual", shQuote(pkg_dir))
   } else {
-    c("CMD", "build", "--no-manual", "--no-build-vignettes", shQuote(pkg_dir))
+    c("CMD", "build", "--no-manual", shQuote(pkg_dir))
   }
   out_log <- system2(r_exe, build_args, stdout = TRUE, stderr = TRUE)
   tar_name <- sprintf("%s_%s.tar.gz", pkg_name, pkg_ver)

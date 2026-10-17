@@ -4,6 +4,7 @@ Update this file whenever a decision, discovery, or status change happens. Newes
 within each section.
 
 ## Status
+- **2026-10-17** — **Documentation website (`docs/site/`), SVG hex sticker logos (`man/figures/logo.svg`), GitHub Pages workflow (`.github/workflows/pages.yaml`), and CRAN `0.1.0` source tarballs & Windows binaries (`dist/` + `tools/submit-cran.R`) created and pushed.**
 - **2026-10-17** — **Completed all 5 post-Phase-8 deliverables in sequence (`pyrt` 0.1.0 & `pyport` 0.1.0, `0 errors | 0 warnings | 0 notes`):**
   1. **Binary & PyPI Batch Builder (`pyport::build_r_package()`, `tools/convert-pypi.R`)**: Builds `.tar.gz` source tarballs and `.zip`/`.tgz` binary R packages via `R CMD INSTALL --build` and benchmarks corpus conversion.
   2. **Codegen Loop & Escape Optimization (`pyrt::py_range_seq()`, `transpile.R`)**: Wired `for <id> in range(...)` without `else` directly to native R `for (<id> in pyrt::py_range_seq(...))` and attached `analyze_escape()` metadata to function contexts.

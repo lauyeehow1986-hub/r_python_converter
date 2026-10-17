@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>pyport &amp; pyrt — Convert Python Packages into Native R Packages</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/logo-pyport.svg" alt="pyport logo"/>
+        <span>pyport &amp; pyrt</span>
+      </a>
+      <div class="nav-links">
+        <a class="active" href="index.html">Home</a>
+        <a href="vignette-pyport.html">pyport Vignette</a>
+        <a href="vignette-pyrt.html">pyrt Vignette</a>
+        <a href="reference.html">API Reference</a>
+        <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="badges">
+          <span class="badge green">R CMD check: 0 errors | 0 warnings | 0 notes</span>
+          <span class="badge yellow">Zero Python Required</span>
+          <span class="badge">Version 0.1.0</span>
+          <span class="badge">MIT License</span>
+        </div>
+        <h1>Convert Python Packages into Standalone Native R Packages</h1>
+        <p class="lead">
+          <strong>pyport</strong> parses and transpiles Python source files, wheels (<code>.whl</code>), and source distributions (<code>.tar.gz</code>) into standalone R packages (<code>.tar.gz</code> source tarballs and Windows <code>.zip</code> / macOS <code>.tgz</code> binaries) backed by <strong>pyrt</strong>—with <strong>no Python installation, no reticulate, no virtualenv, and no PATH changes</strong>.
+        </p>
+      </div>
+      <div class="hero-logos">
+        <img src="assets/logo-pyport.svg" alt="pyport hex sticker"/>
+        <img src="assets/logo-pyrt.svg" alt="pyrt hex sticker"/>
+      </div>
+    </section>
+
+    <h2>Why pyport + pyrt?</h2>
+    <div class="grid-3">
+      <div class="card">
+        <h3>1. Zero Python Dependency</h3>
+        <p>
+          Neither converting a package (<code>pyport::convert()</code>) nor running the converted R package requires Python on the machine. Parsing is powered by a vendored <code>tree-sitter-python</code> v0.23.6 C grammar.
+        </p>
+      </div>
+      <div class="card">
+        <h3>2. Exact Python Semantics in R</h3>
+        <p>
+          <code>pyrt</code> provides reference-semantics containers (<code>py_list</code>, <code>py_dict</code>, <code>py_set</code>), 0-based negative/step slicing, C3 MRO classes, CPS generators, <code>gmp::bigz</code> arbitrary-precision integers, and bit-exact CPython <code>random</code> &amp; NumPy <code>PCG64</code> / <code>MT19937</code> in C.
+        </p>
+      </div>
+      <div class="card">
+        <h3>3. Native C, Cython, &amp; Rust Bridges</h3>
+        <p>
+          Automatically bridges <code>&lt;Python.h&gt;</code> C extensions (<code>PyMethodDef</code>, <code>PyArg_ParseTuple</code>), Cython <code>cdef</code>/<code>cpdef</code> functions, and Rust <code>PyO3</code> (<code>#[pyfunction]</code>, <code>#[pyclass]</code>) to R's C API and <code>extendr</code>.
+        </p>
+      </div>
+    </div>
+
+    <h2>Quick Start</h2>
+    <pre><code>library(pyport)
+library(pyrt)
+
+# 1. Evaluate Python code directly in R (no Python installed!)
+env &lt;- eval_python("
+def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+")
+env$fib(10L)
+#&gt; [1] 55
+env$fib(100L)
+#&gt; Big Integer ('bigz') :
+#&gt; [1] 354224848179261915075
+
+# 2. Convert a Python package into a standalone R package + Windows .zip binary
+res &lt;- convert("corpus/more-itertools", file.path(tempdir(), "more.itertools"))
+built &lt;- build_r_package(res$path, dest_dir = tempdir(), binary = TRUE)
+# Produces more.itertools_10.5.0.tar.gz and more.itertools_10.5.0.zip!</code></pre>
+
+    <h2>Acceptance Corpus</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Corpus Package</th>
+          <th>Generated R Package</th>
+          <th>Tier</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>corpus/more-itertools</code></td>
+          <td><code>more.itertools</code></td>
+          <td>Pure Python (iterators, generators, <code>itertools</code>)</td>
+          <td>Passes <code>testthat</code> &amp; builds <code>.zip</code> binary</td>
+        </tr>
+        <tr>
+          <td><code>corpus/python-dateutil</code></td>
+          <td><code>python.dateutil</code></td>
+          <td>Pure Python (<code>datetime</code>, calendar arithmetic)</td>
+          <td>Passes <code>testthat</code> &amp; builds <code>.zip</code> binary</td>
+        </tr>
+        <tr>
+          <td><code>corpus/attrs</code></td>
+          <td><code>attrs.lite</code></td>
+          <td>Pure Python (classes, validators, record evolution)</td>
+          <td>Passes <code>testthat</code> &amp; builds <code>.zip</code> binary</td>
+        </tr>
+        <tr>
+          <td><code>corpus/sklearn-statsmodels</code></td>
+          <td><code>sklearn.statsmodels.lite</code></td>
+          <td><code>numpy</code> + <code>scipy.stats</code> (OLS &amp; standardization)</td>
+          <td>Passes <code>testthat</code> &amp; builds <code>.zip</code> binary</td>
+        </tr>
+        <tr>
+          <td><code>corpus/pyyaml-c</code></td>
+          <td><code>pyyaml.c.lite</code></td>
+          <td>Hybrid Python + <code>&lt;Python.h&gt;</code> C extension</td>
+          <td>Compiles native DLL &amp; passes <code>testthat</code></td>
+        </tr>
+        <tr>
+          <td><code>corpus/orjson-rust</code></td>
+          <td><code>orjson.rust.lite</code></td>
+          <td>Rust <code>PyO3</code> <code>#[pyfunction]</code> &rarr; <code>extendr</code></td>
+          <td>Generates <code>extendr</code> crate &amp; <code>Makevars.win</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <footer class="footer">
+    Built with <strong>pyport</strong> 0.1.0 &amp; <strong>pyrt</strong> 0.1.0 &middot; MIT License &middot; <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub Repository</a>
+  </footer>
+</body>
+</html>

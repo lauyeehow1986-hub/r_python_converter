@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 276" width="240" height="276" role="img" aria-label="pyport hex logo">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="55%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd43b"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="pyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd43b"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="rGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Hexagon Border -->
+  <polygon points="120,6 232,70 232,206 120,270 8,206 8,70" fill="url(#borderGrad)"/>
+  <!-- Inner Hexagon Fill -->
+  <polygon points="120,14 224,74 224,202 120,262 16,202 16,74" fill="url(#bgGrad)"/>
+
+  <!-- Subtle Grid / AST Nodes Background -->
+  <g stroke="#334155" stroke-width="1.2" opacity="0.55">
+    <line x1="60" y1="68" x2="120" y2="44"/>
+    <line x1="180" y1="68" x2="120" y2="44"/>
+    <line x1="60" y1="68" x2="88" y2="100"/>
+    <line x1="180" y1="68" x2="152" y2="100"/>
+    <circle cx="120" cy="44" r="3.5" fill="#38bdf8"/>
+    <circle cx="60" cy="68" r="3" fill="#ffd43b"/>
+    <circle cx="180" cy="68" r="3" fill="#60a5fa"/>
+  </g>
+
+  <!-- Left badge: .py source -->
+  <rect x="34" y="88" width="62" height="52" rx="10" fill="#1e293b" stroke="url(#pyGrad)" stroke-width="2.5"/>
+  <text x="65" y="120" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" font-weight="700" fill="url(#pyGrad)">.py</text>
+
+  <!-- Center Bridge Arrow (AST -> Native R) -->
+  <path d="M103 114 L131 114" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+  <polygon points="139,114 128,107 128,121" fill="#38bdf8"/>
+  <text x="120" y="99" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5" font-weight="600" fill="#94a3b8" letter-spacing="0.8">AST</text>
+
+  <!-- Right badge: Native R package -->
+  <rect x="144" y="88" width="62" height="52" rx="10" fill="#1e293b" stroke="url(#rGrad)" stroke-width="2.5"/>
+  <text x="175" y="121" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="25" font-weight="800" fill="url(#rGrad)">R</text>
+
+  <!-- Package Name -->
+  <text x="120" y="190" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="36" font-weight="800" fill="#f8fafc" letter-spacing="0.5">
+    <tspan fill="#ffd43b">py</tspan><tspan fill="#f8fafc">port</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="120" y="214" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" fill="#94a3b8" letter-spacing="1.1">
+    PYTHON TO NATIVE R
+  </text>
+</svg>

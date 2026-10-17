@@ -1,6 +1,14 @@
 # pyport & pyrt — Convert Python Packages into Standalone Native R Packages
 
+<p align="left">
+  <img src="packages/pyport/man/figures/logo.svg" width="150" alt="pyport hex logo" />
+  <img src="packages/pyrt/man/figures/logo.svg" width="150" alt="pyrt hex logo" />
+</p>
+
 `pyport` converts Python 3 packages into standalone, CRAN-clean R packages that install and run across Windows, macOS, and Linux **without any Python installation, `reticulate`, virtualenv, or `PATH` changes**.
+
+- **Documentation Website & Vignettes**: [`docs/site/index.html`](docs/site/index.html) ([`pyport` Vignette](docs/site/vignette-pyport.html) · [`pyrt` Vignette](docs/site/vignette-pyrt.html) · [API Reference](docs/site/reference.html))
+- **Pre-built CRAN Source Tarballs & Windows Binaries (`0.1.0`)**: [`dist/`](dist/)
 
 ## Repository Structure
 

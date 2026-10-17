@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>API Reference — pyport &amp; pyrt</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/logo-pyport.svg" alt="pyport logo"/>
+        <span>pyport &amp; pyrt</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="vignette-pyport.html">pyport Vignette</a>
+        <a href="vignette-pyrt.html">pyrt Vignette</a>
+        <a class="active" href="reference.html">API Reference</a>
+        <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1>API Reference</h1>
+
+    <h2><code>pyport</code> — Converter, Parser, Transpiler, &amp; Package Builder</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Function</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>convert(source, dest, pkg_name = NULL, overwrite = TRUE)</code></td>
+          <td>Convert a Python module, source directory, <code>.tar.gz</code> sdist, or <code>.whl</code> wheel into a standalone <code>R CMD check</code>-clean R package.</td>
+        </tr>
+        <tr>
+          <td><code>build_r_package(pkg_dir, dest_dir = NULL, binary = FALSE)</code></td>
+          <td>Build a portable CRAN source tarball (<code>.tar.gz</code>) and optional pre-compiled platform binary (<code>.zip</code> on Windows, <code>.tgz</code> on macOS).</td>
+        </tr>
+        <tr>
+          <td><code>parse_python(source)</code> / <code>parse_python_file(path)</code></td>
+          <td>Parse Python 3 source code into a <code>py_ast_node</code> tree using the vendored <code>tree-sitter-python</code> v0.23.6 C grammar.</td>
+        </tr>
+        <tr>
+          <td><code>ast_dump(node, indent = NULL)</code></td>
+          <td>Format a <code>py_ast_node</code> tree in CPython 3.12 <code>ast.dump()</code> notation.</td>
+        </tr>
+        <tr>
+          <td><code>analyze_python(source)</code> / <code>analyze_escape(node)</code></td>
+          <td>Perform lexical scope resolution (<code>local</code>, <code>global</code>, <code>nonlocal</code>, generators) and container escape analysis.</td>
+        </tr>
+        <tr>
+          <td><code>transpile_python(source)</code> / <code>eval_python(source, envir)</code></td>
+          <td>Lower Python source code to executable R code backed by <code>pyrt</code> and optionally evaluate it in an environment.</td>
+        </tr>
+        <tr>
+          <td><code>convert_pytest_code(source, pkg_name = NULL)</code></td>
+          <td>Translate Python <code>pytest</code> and <code>unittest</code> test files into <code>testthat</code> R expectations.</td>
+        </tr>
+        <tr>
+          <td><code>check_python_license(license_str)</code></td>
+          <td>Audit Python license metadata and map permissive and <code>GPL</code>/<code>LGPL</code> licenses to CRAN <code>License:</code> strings.</td>
+        </tr>
+        <tr>
+          <td><code>detect_native_extensions(source_dir)</code></td>
+          <td>Detect C/C++, Cython (<code>.pyx</code>), and Rust (<code>Cargo.toml</code> / <code>PyO3</code>) extensions in a Python package.</td>
+        </tr>
+        <tr>
+          <td><code>cpython_shim_header()</code> / <code>transpile_c_extension(code, pkg_name)</code></td>
+          <td>Generate <code>pyport_cpython_shim.h</code> and lower C/Cython scalar functions and <code>PyMethodDef</code> + <code>PyArg_ParseTuple</code> tables to R <code>.Call</code> wrappers.</td>
+        </tr>
+        <tr>
+          <td><code>transpile_pyo3_rust(rust_code, pkg_name)</code></td>
+          <td>Rewrite Rust <code>PyO3</code> <code>#[pyfunction]</code>, <code>#[pyclass]</code>, and <code>#[pymethods]</code> attributes into <code>extendr</code> attributes and generate <code>Makevars</code> / <code>Makevars.win</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2><code>pyrt</code> — Python Runtime Semantics for R</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Exported Functions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Containers</td>
+          <td><code>py_list()</code>, <code>py_dict()</code>, <code>py_set()</code>, <code>py_tuple()</code>, <code>py_len()</code>, <code>py_in()</code>, <code>py_not_in()</code></td>
+        </tr>
+        <tr>
+          <td>Numerics &amp; Comparison</td>
+          <td><code>py_int()</code>, <code>py_float()</code>, <code>py_bool()</code>, <code>py_add()</code>, <code>py_sub()</code>, <code>py_mul()</code>, <code>py_truediv()</code>, <code>py_floordiv()</code>, <code>py_mod()</code>, <code>py_divmod()</code>, <code>py_pow()</code>, <code>py_bitand()</code>, <code>py_bitor()</code>, <code>py_bitxor()</code>, <code>py_invert()</code>, <code>py_lshift()</code>, <code>py_rshift()</code>, <code>py_eq()</code>, <code>py_ne()</code>, <code>py_lt()</code>, <code>py_le()</code>, <code>py_gt()</code>, <code>py_ge()</code>, <code>py_chained_cmp()</code></td>
+        </tr>
+        <tr>
+          <td>Indexing &amp; Slicing</td>
+          <td><code>py_slice(start, stop, step)</code>, <code>py_getitem(x, key)</code>, <code>py_setitem(x, key, value)</code>, <code>py_delitem(x, key)</code>, <code>py_unpack(x, n, star_idx)</code></td>
+        </tr>
+        <tr>
+          <td>Iteration &amp; Generators</td>
+          <td><code>py_iter()</code>, <code>py_next()</code>, <code>py_collect()</code>, <code>py_range()</code>, <code>py_range_seq()</code>, <code>py_enumerate()</code>, <code>py_zip()</code>, <code>py_reversed()</code>, <code>py_generator()</code>, <code>py_bounce()</code>, <code>py_yield()</code>, <code>py_stop_iteration()</code></td>
+        </tr>
+        <tr>
+          <td>Classes &amp; Dispatch</td>
+          <td><code>py_class(name, bases, dict)</code>, <code>py_super(cls, self)</code>, <code>py_getattr()</code>, <code>py_setattr()</code>, <code>py_hasattr()</code>, <code>py_delattr()</code>, <code>py_isinstance()</code>, <code>py_issubclass()</code>, <code>py_property()</code>, <code>py_staticmethod()</code>, <code>py_classmethod()</code>, <code>py_call()</code></td>
+        </tr>
+        <tr>
+          <td>Exceptions &amp; Contexts</td>
+          <td><code>py_exception()</code>, <code>py_raise()</code>, <code>py_try()</code>, <code>py_with()</code>, <code>py_assert()</code></td>
+        </tr>
+        <tr>
+          <td>Strings &amp; Formatting</td>
+          <td><code>py_str()</code>, <code>py_repr()</code>, <code>py_format()</code>, <code>py_percent_format()</code>, <code>py_str_method()</code></td>
+        </tr>
+        <tr>
+          <td>Bit-Exact RNG</td>
+          <td><code>py_random()</code>, <code>py_random_generator()</code> (CPython 3.12 <code>MT19937</code> + <code>SHA-512</code>), <code>np$random$RandomState()</code> (<code>MT19937</code>), <code>np$random$default_rng()</code> (<code>PCG64</code> + <code>SeedSequence</code>)</td>
+        </tr>
+        <tr>
+          <td>Stdlib &amp; Scientific</td>
+          <td><code>py_stdlib(name)</code>, <code>py_stdlib_names()</code>, <code>py_ndarray()</code>, <code>py_matmul()</code>, <code>py_builtin(name)</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <footer class="footer">
+    Built with <strong>pyport</strong> 0.1.0 &amp; <strong>pyrt</strong> 0.1.0 &middot; MIT License &middot; <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub Repository</a>
+  </footer>
+</body>
+</html>

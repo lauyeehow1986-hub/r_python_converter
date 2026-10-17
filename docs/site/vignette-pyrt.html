@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Python Runtime Semantics in Native R (pyrt)</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/logo-pyrt.svg" alt="logo"/>
+        <span>pyport &amp; pyrt</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a class="" href="vignette-pyport.html">pyport Vignette</a>
+        <a class="active" href="vignette-pyrt.html">pyrt Vignette</a>
+        <a href="reference.html">API Reference</a>
+        <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub</a>
+      </div>
+    </div>
+  </nav>
+  <main class="container">
+    <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;">
+      <img src="assets/logo-pyrt.svg" alt="hex logo" style="width:96px;height:auto;"/>
+      <h1 style="margin:0;">Python Runtime Semantics in Native R (pyrt)</h1>
+    </div>
+<h2>Overview</h2>
+<p><code>pyrt</code> provides the Python 3 runtime semantics required by R packages generated</p>
+<p>with <code>pyport</code>:</p>
+<ul>
+<li>Reference-semantics containers (<code>py_list()</code>, <code>py_dict()</code>, <code>py_set()</code>, <code>py_tuple()</code>)</li>
+<li>C3 MRO classes, multiple inheritance, descriptors (<code>py_property()</code>, <code>py_super()</code>)</li>
+<li>0-based negative and step slicing (<code>py_slice()</code>, <code>py_getitem()</code>, <code>py_setitem()</code>)</li>
+<li>Arbitrary-precision integers (<code>gmp::bigz</code>) with floor division toward $-\infty$</li>
+<li>Bit-exact CPython 3.12 <code>random</code> (<code>py_random</code>) and <code>numpy.random.RandomState</code></li>
+<li>Standard library (<code>math</code>, <code>itertools</code>, <code>functools</code>, <code>collections</code>, <code>datetime</code>, <code>re</code>, <code>json</code>)</li>
+</ul>
+<p>  and <code>numpy</code> / <code>scipy</code> / <code>pandas</code> bridges via <code>py_stdlib()</code></p>
+<pre><code>library(pyrt)
+
+# Reference-semantics list
+xs &lt;- py_list(list(10L, 20L, 30L))
+alias &lt;- xs
+xs$append(40L)
+py_len(alias)
+#&gt; [1] 4
+
+# Bit-exact CPython 3.12 random
+rng &lt;- py_random$Random(42L)
+rng$random()
+#&gt; [1] 0.6394268</code></pre>
+  </main>
+  <footer class="footer">
+    Built with <strong>pyport</strong> 0.1.0 &amp; <strong>pyrt</strong> 0.1.0 &middot; MIT License &middot; <a href="https://github.com/lauyeehow1986-hub/r_python_converter">GitHub Repository</a>
+  </footer>
+</body>
+</html>
