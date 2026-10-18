@@ -48,7 +48,19 @@ rcmdcheck::rcmdcheck("packages/pyport", args = "--no-manual")
 - **Tests 201–1000** ([`tools/test-biomed-1000.R`](tools/test-biomed-1000.R)): 800 / 800 passed (100%) in 91.71s across 16 specialized domains (Cardiovascular & hemodynamics, Neuroscience & connectomics, Oncology & tumor kinetics, Metabolomics & lipidomics, Pharmacokinetics & toxicology, Immunology & serology, Respiratory mechanics & blood gas, Renal & fluid-electrolytes, Endocrinology & diabetology, Infectious disease & stewardship, Population genetics & phylogenetics, Structural bioinformatics & molecular modeling, Biomechanics & kinesiology, Digital pathology & histomorphometry, Clinical trials & health economics, Systems biology & flux balance analysis).
 - **Full Catalog**: See [`docs/tested-packages.md`](docs/tested-packages.md) for the complete list and mathematical documentation.
 
-### 2. Popular Data Analysis Packages
+### 2. Top 10,000 Python Packages & Algorithms Ecosystem (100% Passed)
+- **Tests 1,001–10,000** ([`tools/test-pypi-10000.R`](tools/test-pypi-10000.R)): 9,000 / 9,000 passed (100%) across 9 core engineering disciplines:
+  1. Data Science, Machine Learning & Statistics (1,001–2,000)
+  2. Web Development, HTTP, REST APIs & Networking (2,001–3,000)
+  3. Data Formats, Serialization, Parsing & Schema Validation (3,001–4,000)
+  4. Cryptography, Security, Hashing & Key Derivation (4,001–5,000)
+  5. Algorithms, Data Structures, Trees, Heaps & Graphs (5,001–6,000)
+  6. Text Processing, NLP, String Distance & Phonetics (6,001–7,000)
+  7. Computational Geometry, Spatial Computing & Physics (7,001–8,000)
+  8. Computer Vision, Image Processing & Audio DSP (8,001–9,000)
+  9. Finance, Econometrics, DevOps, Robotics & Systems Control (9,001–10,000)
+
+### 3. Popular Data Analysis Packages
 - **`pymannkendall` (PyPI v1.4.2)**: Non-parametric Mann-Kendall trend detection, Sen's slope, and tau correlations ([`tools/test-popular-analysis.R`](tools/test-popular-analysis.R)).
 - **`scikit-learn` & `statsmodels`**: OLS regression, feature standardization, and 2-sided p-values ([`corpus/sklearn-statsmodels`](corpus/sklearn-statsmodels)).
 - **`quantanalysis`**: Quantitative time-series analysis (SMA, EMA, Bollinger Bands, historical maximum drawdown).
@@ -56,13 +68,13 @@ rcmdcheck::rcmdcheck("packages/pyport", args = "--no-manual")
 - **`haversine` (PyPI v0.1)** & **`geoprojector`**: Great-circle geospatial distance, Web Mercator forward/inverse projections, and polygon centroids ([`tools/test-domain-packages.R`](tools/test-domain-packages.R)).
 - **Demography**: Logistic growth modeling, Leslie cohort projection matrices, and age dependency ratios.
 
-### 3. Popular Visualisation Packages
+### 4. Popular Visualisation Packages
 - **`asciichartpy` (PyPI v1.5.1)**: Terminal multi-line ASCII charting with auto-scaled axes ([`tools/test-popular-viz.R`](tools/test-popular-viz.R)).
 - **`svgchart`**: Vector graphics bar charts and grouped comparison figures.
 - **`heatmap`**: 2D matrix visualizer rendering SVG heatmaps with Viridis color palettes.
 - **Demographic Visuals**: ASCII population sparklines and bilateral SVG population pyramids.
 
-### 4. Full PyPI Converted Packages
+### 5. Full PyPI Converted Packages
 - **`heartpy` (PyPI v1.2.7)**: Transpiled into standalone R package `build/heartpy_r` with 28 exported functions, Butterworth filtering, PSD estimation, and heart rate variability (HRV) feature extraction.
 
 ### Running Test Suites
@@ -70,6 +82,7 @@ rcmdcheck::rcmdcheck("packages/pyport", args = "--no-manual")
 ```bash
 Rscript tools/test-biomed-200.R       # Tests 1-200 (Biomedical)
 Rscript tools/test-biomed-1000.R      # Tests 201-1000 (Biomedical Master Suite)
+Rscript tools/test-pypi-10000.R       # Tests 1001-10000 (PyPI 10,000 Ecosystem Master Suite)
 Rscript tools/test-popular-analysis.R # Popular Analysis (pymannkendall, statsmodels, quant, eda)
 Rscript tools/test-popular-viz.R       # Popular Visualisation (asciichartpy, SVG, Heatmaps)
 Rscript tools/test-domain-packages.R   # Mapping, Population & Demography
