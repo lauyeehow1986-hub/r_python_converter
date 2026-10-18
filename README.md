@@ -8,7 +8,26 @@
 `pyport` converts Python 3 packages into standalone, CRAN-clean R packages that install and run across Windows, macOS, and Linux **without any Python installation, `reticulate`, virtualenv, or `PATH` changes**.
 
 - **Documentation Website & Vignettes**: [`docs/site/index.html`](docs/site/index.html) ([`pyport` Vignette](docs/site/vignette-pyport.html) · [`pyrt` Vignette](docs/site/vignette-pyrt.html) · [API Reference](docs/site/reference.html))
+- **Autonomous Conversion Guide**: [`docs/conversion-guide.md`](docs/conversion-guide.md) (When `pyport` is autonomous vs. when developer guidance is needed)
 - **Pre-built CRAN Source Tarballs & Windows Binaries (`0.1.0`)**: [`dist/`](dist/)
+
+## Autonomous Conversion: What Works vs. When You Need Guidance
+
+For **~90% of algorithmic, scientific, statistical, and pure-Python packages, `pyport` and `pyrt` are completely self-sufficient to run natively in R**:
+
+- **Runs Autonomously**:
+  - Pure Python math, statistics, numerical analysis, and machine learning pipelines.
+  - Object-Oriented Programming (Classes, C3 MRO inheritance, `@property`, `@staticmethod`, `@classmethod`).
+  - Reference-semantics containers (`py_list`, `py_dict`, `py_set`, `py_tuple`) and 0-based step slicing.
+  - Python standard library (`math`, `random`, `itertools`, `functools`, `collections`, `re`, `json`, `datetime`, `heapq`, `bisect`).
+  - NumPy operations (`py_ndarray`, broadcasting, `@` matmul, axis reductions, `.T`, `dot()`).
+  - Automatic CRAN package bundling (`DESCRIPTION`, `NAMESPACE`, `LICENSE`, `.Rd` documentation, and `pytest` -> `testthat` test suites).
+- **When Manual Guidance is Needed**:
+  - Large compiled C/C++/Fortran/Cython engines (e.g., CUDA, ODEPACK, libtorch) that require custom C shims or Rcpp/LAPACK integration.
+  - Highly dynamic metaprogramming (`eval()`, `exec()`, `inspect.getsource()`, runtime dynamic class creation via `type()`).
+  - Python vs. R type subtleties (e.g. numeric double `2` vs integer `2L` in string formatting).
+
+For full details, see the comprehensive [Autonomous Conversion Guide](docs/conversion-guide.md).
 
 ## Repository Structure
 

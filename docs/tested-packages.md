@@ -1,6 +1,6 @@
 # Tested Python Packages & Algorithms Directory
 
-This document provides a comprehensive catalog of all Python packages, modules, and domain algorithms verified and tested to run natively in R using [`pyport`](../packages/pyport) and [`pyrt`](../packages/pyrt) with **0 errors, 0 warnings, and 0 notes**.
+This document provides a comprehensive catalog of all Python packages, modules, and domain algorithms verified and tested to run natively in R using [`pyport`](../packages/pyport) and [`pyrt`](../packages/pyrt) with **0 errors, 0 warnings, and 0 notes**. For practical guidance on when `pyport` is autonomous vs. when developer guidance is needed, see the [Autonomous Conversion Guide](conversion-guide.md).
 
 ---
 
