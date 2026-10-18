@@ -7,8 +7,8 @@
 
 `pyport` converts Python 3 packages into standalone, CRAN-clean R packages that install and run across Windows, macOS, and Linux **without any Python installation, `reticulate`, virtualenv, or `PATH` changes**.
 
-- **Documentation Website & Vignettes**: [`docs/site/index.html`](docs/site/index.html) ([`pyport` Vignette](docs/site/vignette-pyport.html) · [`pyrt` Vignette](docs/site/vignette-pyrt.html) · [API Reference](docs/site/reference.html))
-- **Autonomous Conversion Guide**: [`docs/conversion-guide.md`](docs/conversion-guide.md) (When `pyport` is autonomous vs. when developer guidance is needed)
+- **Documentation Website & Vignettes**: [https://lauyeehow1986-hub.github.io/r_python_converter/](https://lauyeehow1986-hub.github.io/r_python_converter/) ([`pyport` Vignette](https://lauyeehow1986-hub.github.io/r_python_converter/vignette-pyport.html) · [`pyrt` Vignette](https://lauyeehow1986-hub.github.io/r_python_converter/vignette-pyrt.html) · [API Reference](https://lauyeehow1986-hub.github.io/r_python_converter/reference.html) · [10,000 Packages](https://lauyeehow1986-hub.github.io/r_python_converter/tested-packages.html))
+- **Autonomous Conversion Guide**: [`docs/conversion-guide.md`](docs/conversion-guide.md) or [Online Guide](https://lauyeehow1986-hub.github.io/r_python_converter/conversion-guide.html) (When `pyport` is autonomous vs. when developer guidance is needed)
 - **Pre-built CRAN Source Tarballs & Windows Binaries (`0.1.0`)**: [`dist/`](dist/) · [GitHub Releases](https://github.com/lauyeehow1986-hub/r_python_converter/releases) ([`pyrt v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/pyrt-v0.1.0) · [`pyport v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/pyport-v0.1.0) · [`Unified v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/v0.1.0))
 
 ## Autonomous Conversion: What Works vs. When You Need Guidance

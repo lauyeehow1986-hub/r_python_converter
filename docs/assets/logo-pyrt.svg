@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 276" width="240" height="276" role="img" aria-label="pyrt hex logo">
+  <defs>
+    <linearGradient id="rtBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="60%" stop-color="#132a3e"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="rtBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#ffd43b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Hexagon Border -->
+  <polygon points="120,6 232,70 232,206 120,270 8,206 8,70" fill="url(#rtBorder)"/>
+  <!-- Inner Hexagon Fill -->
+  <polygon points="120,14 224,74 224,202 120,262 16,202 16,74" fill="url(#rtBg)"/>
+
+  <!-- Runtime Core Icon (Interlocking rings + C/R gear nodes) -->
+  <g fill="none" stroke-width="3">
+    <circle cx="120" cy="108" r="36" stroke="#38bdf8" stroke-dasharray="10 5"/>
+    <circle cx="120" cy="108" r="22" stroke="#34d399"/>
+  </g>
+  <text x="120" y="114" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16" font-weight="700" fill="#ffd43b">C+R</text>
+
+  <!-- Package Name -->
+  <text x="120" y="190" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="36" font-weight="800" fill="#f8fafc" letter-spacing="0.5">
+    <tspan fill="#34d399">py</tspan><tspan fill="#f8fafc">rt</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="120" y="214" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="500" fill="#94a3b8" letter-spacing="1.1">
+    PYTHON RUNTIME FOR R
+  </text>
+</svg>

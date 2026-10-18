@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640.0" height="360.0" viewBox="0 0 640.0 360.0">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="320.0" y="24" text-anchor="middle" font-size="16" font-weight="bold" fill="#111827">Converted Python Package Downloads by Category</text>
+<line x1="60" y1="310.0" x2="610.0" y2="310.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="314.0" text-anchor="end" font-size="11" fill="#6b7280">0.0</text>
+<line x1="60" y1="256.0" x2="610.0" y2="256.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="260.0" text-anchor="end" font-size="11" fill="#6b7280">636.0</text>
+<line x1="60" y1="202.0" x2="610.0" y2="202.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="206.0" text-anchor="end" font-size="11" fill="#6b7280">1272.0</text>
+<line x1="60" y1="148.0" x2="610.0" y2="148.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="152.0" text-anchor="end" font-size="11" fill="#6b7280">1908.0</text>
+<line x1="60" y1="94.0" x2="610.0" y2="94.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="98.0" text-anchor="end" font-size="11" fill="#6b7280">2544.0</text>
+<line x1="60" y1="40.0" x2="610.0" y2="40.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="52" y="44.0" text-anchor="end" font-size="11" fill="#6b7280">3180.0</text>
+<line x1="60" y1="310.0" x2="610.0" y2="310.0" stroke="#9ca3af" stroke-width="1.5"/>
+<line x1="60" y1="40" x2="60" y2="310.0" stroke="#9ca3af" stroke-width="1.5"/>
+<rect x="79.2" y="189.4" width="71.5" height="120.6" fill="#0969da" rx="3"/>
+<text x="115.0" y="184.4" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">1420.0</text>
+<text x="115.0" y="328.0" text-anchor="middle" font-size="11" fill="#4b5563">Demography</text>
+<rect x="189.2" y="110.5" width="71.5" height="199.5" fill="#0969da" rx="3"/>
+<text x="225.0" y="105.5" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">2350.0</text>
+<text x="225.0" y="328.0" text-anchor="middle" font-size="11" fill="#4b5563">Geospatial</text>
+<rect x="299.2" y="40.0" width="71.5" height="270.0" fill="#0969da" rx="3"/>
+<text x="335.0" y="35.0" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">3180.0</text>
+<text x="335.0" y="328.0" text-anchor="middle" font-size="11" fill="#4b5563">Visualisation</text>
+<rect x="409.2" y="149.5" width="71.5" height="160.5" fill="#0969da" rx="3"/>
+<text x="445.0" y="144.5" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">1890.0</text>
+<text x="445.0" y="328.0" text-anchor="middle" font-size="11" fill="#4b5563">Statistics</text>
+<rect x="519.2" y="68.9" width="71.5" height="241.1" fill="#0969da" rx="3"/>
+<text x="555.0" y="63.9" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">2840.0</text>
+<text x="555.0" y="328.0" text-anchor="middle" font-size="11" fill="#4b5563">Machine Learning</text>
+</svg>
