@@ -354,7 +354,8 @@ convert <- function(source, dest, pkg_name = NULL, overwrite = TRUE) {
     r_code <- transpile_python(tree_i, module_name = rel_i)
     info_i <- attr(r_code, "analysis")
     all_diags <- c(all_diags, info_i$diagnostics)
-    all_globals <- unique(c(all_globals, collect_all_scope_vars(info_i$scope)))
+    m_syn <- regmatches(as.character(r_code), gregexpr("\\.py_[A-Za-z0-9_]+", as.character(r_code)))[[1L]]
+    all_globals <- unique(c(all_globals, collect_all_scope_vars(info_i$scope), m_syn))
     all_exports <- unique(c(all_exports, extract_module_exports(tree_i)))
 
     r_fname <- sprintf("%02d-%s.R", i, gsub("[^A-Za-z0-9_]", "_", tools::file_path_sans_ext(rel_i)))
@@ -451,7 +452,8 @@ convert <- function(source, dest, pkg_name = NULL, overwrite = TRUE) {
   if (isTRUE(lic_info$needs_license_file)) {
     lic_lines <- c(
       sprintf("YEAR: %s", format(Sys.Date(), "%Y")),
-      sprintf("COPYRIGHT HOLDER: %s", meta$author)
+      sprintf("COPYRIGHT HOLDER: %s", meta$author),
+      sprintf("ORGANIZATION: %s", meta$author)
     )
     write_lf(lic_lines, file.path(dest, "LICENSE"))
   }

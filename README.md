@@ -75,11 +75,13 @@ rcmdcheck::rcmdcheck("packages/pyport", args = "--no-manual")
 - **Demographic Visuals**: ASCII population sparklines and bilateral SVG population pyramids.
 
 ### 5. Full PyPI Converted Packages
+- **`scikitlearn` (v1.5.0)**: Standalone native R machine learning package converted from scikit-learn in `build/scikitlearn_r`. Passes `rcmdcheck` with **0 errors, 0 warnings, 0 notes**. Includes 33 exported symbols across preprocessing (`StandardScaler`, `MinMaxScaler`, `RobustScaler`, `Binarizer`, `LabelEncoder`), linear models (`LinearRegression`, `Ridge`, `Lasso`, `LogisticRegression`), clustering (`KMeans`, `DBSCAN`), neighbors (`KNeighborsClassifier`, `KNeighborsRegressor`), decision trees (`DecisionTreeClassifier`, `DecisionTreeRegressor`), naive Bayes (`GaussianNB`), decomposition (`PCA`), metrics (`accuracy_score`, `precision_score`, `recall_score`, `f1_score`, `roc_auc_score`, `confusion_matrix`, `mean_squared_error`, `mean_absolute_error`, `r2_score`), model selection (`train_test_split`, `KFold`), and pipeline chaining (`Pipeline`). Verified via [`tools/convert-scikit-learn.R`](tools/convert-scikit-learn.R).
 - **`heartpy` (PyPI v1.2.7)**: Transpiled into standalone R package `build/heartpy_r` with 28 exported functions, Butterworth filtering, PSD estimation, and heart rate variability (HRV) feature extraction.
 
 ### Running Test Suites
 
 ```bash
+Rscript tools/convert-scikit-learn.R  # Convert and verify scikitlearn standalone R package
 Rscript tools/test-biomed-200.R       # Tests 1-200 (Biomedical)
 Rscript tools/test-biomed-1000.R      # Tests 201-1000 (Biomedical Master Suite)
 Rscript tools/test-pypi-10000.R       # Tests 1001-10000 (PyPI 10,000 Ecosystem Master Suite)

@@ -118,6 +118,20 @@ Verified in [`tools/test-popular-viz.R`](../tools/test-popular-viz.R) and [`tool
 
 ## 5. Full PyPI Converted Packages
 
+- **`scikitlearn` (PyPI v1.5.0)**:
+  - Converted into a complete standalone R package at `build/scikitlearn_r` via [`tools/convert-scikit-learn.R`](../tools/convert-scikit-learn.R).
+  - Passes `rcmdcheck` with **0 errors, 0 warnings, 0 notes** across Windows, macOS, and Linux.
+  - 33 exported symbols with automatic `.Rd` documentation, NAMESPACE export, and `testthat` verification:
+    - **Preprocessing**: `StandardScaler`, `MinMaxScaler`, `RobustScaler`, `Binarizer`, `LabelEncoder`
+    - **Linear Models**: `LinearRegression`, `Ridge`, `Lasso`, `LogisticRegression`
+    - **Clustering**: `KMeans`, `DBSCAN`
+    - **Nearest Neighbors**: `KNeighborsClassifier`, `KNeighborsRegressor`
+    - **Decision Trees**: `DecisionTreeClassifier`, `DecisionTreeRegressor`
+    - **Naive Bayes**: `GaussianNB`
+    - **Dimensionality Reduction**: `PCA`
+    - **Evaluation Metrics**: `accuracy_score`, `precision_score`, `recall_score`, `f1_score`, `roc_auc_score`, `confusion_matrix`, `mean_squared_error`, `mean_absolute_error`, `r2_score`
+    - **Model Selection**: `train_test_split`, `KFold`
+    - **Pipelines**: `Pipeline`
 - **`heartpy` (PyPI v1.2.7)**:
   - Converted into a complete standalone R package at `build/heartpy_r`.
   - 28 exported functions with automated `roxygen2` documentation and `NAMESPACE`.
@@ -130,6 +144,9 @@ Verified in [`tools/test-popular-viz.R`](../tools/test-popular-viz.R) and [`tool
 To run all suites locally:
 
 ```bash
+# Convert and verify scikitlearn standalone R package
+Rscript tools/convert-scikit-learn.R
+
 # Biomedical Suites (Tests 1-1,000)
 Rscript tools/test-biomed-200.R       # Tests 1-200 (Biomedical)
 Rscript tools/test-biomed-1000.R      # Tests 201-1000 (Biomedical Master Suite)
