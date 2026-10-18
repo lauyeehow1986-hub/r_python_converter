@@ -9,7 +9,7 @@
 
 - **Documentation Website & Vignettes**: [`docs/site/index.html`](docs/site/index.html) ([`pyport` Vignette](docs/site/vignette-pyport.html) · [`pyrt` Vignette](docs/site/vignette-pyrt.html) · [API Reference](docs/site/reference.html))
 - **Autonomous Conversion Guide**: [`docs/conversion-guide.md`](docs/conversion-guide.md) (When `pyport` is autonomous vs. when developer guidance is needed)
-- **Pre-built CRAN Source Tarballs & Windows Binaries (`0.1.0`)**: [`dist/`](dist/)
+- **Pre-built CRAN Source Tarballs & Windows Binaries (`0.1.0`)**: [`dist/`](dist/) · [GitHub Releases](https://github.com/lauyeehow1986-hub/r_python_converter/releases) ([`pyrt v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/pyrt-v0.1.0) · [`pyport v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/pyport-v0.1.0) · [`Unified v0.1.0`](https://github.com/lauyeehow1986-hub/r_python_converter/releases/tag/v0.1.0))
 
 ## Autonomous Conversion: What Works vs. When You Need Guidance
 
