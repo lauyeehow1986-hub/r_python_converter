@@ -11,7 +11,7 @@ Authors@R: c(
   )
 Description: Parses 'Python' source code without requiring a 'Python'
     installation and converts 'Python' packages into standalone 'R' packages
-    that run natively in 'R'. Parsing uses a vendored 'tree-sitter' grammar
+    that run directly in 'R'. Parsing uses an included 'tree-sitter' grammar
     for 'Python' together with the 'treesitter' package, and produces an
     abstract syntax tree that mirrors the 'Python' 'ast' module.
 License: MIT + file LICENSE
